@@ -11,6 +11,8 @@
     <modules>
         <module>utils</module>
         <module>core</module>
+        <module>dynamodb-data-spring-boot-starter</module>
+        <module>dynamodb-data-spring-boot-autoconfigure</module>
     </modules>
 
     <dependencyManagement>

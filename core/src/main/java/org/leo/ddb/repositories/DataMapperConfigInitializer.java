@@ -10,7 +10,7 @@ import java.util.Map;
 
 @Configuration
 class DataMapperConfigInitializer {
-    @Value("${sfly.ddb.entities.basePackage:com.shutterfly}")
+    @Value("${org.leo.aws.ddb.entities.basePackage:org.leo}")
     private String dtoBasePackage;
 
     private final Map<Class, DataMapper> dataMapperMap;

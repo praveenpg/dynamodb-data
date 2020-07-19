@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class EntityValidationInitializer {
-    @Value("${sfly.ddb.entities.basePackage:com.shutterfly}")
+    @Value("${org.leo.ddb.entities.basePackage:org.leo}")
     private String dtoBasePackage;
 
     @Bean

@@ -3,3 +3,5 @@ dynamodb-data.iml
 /utils/target
 .idea
 /core/core.iml
+dynamodb-data-spring-boot-starter/dynamodb-data-spring-boot-starter.iml
+dynamodb-data-spring-boot-autoconfigure/dynamodb-data-spring-boot-autoconfigure.iml

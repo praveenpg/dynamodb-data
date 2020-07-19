@@ -68,8 +68,8 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
         final DataMapper<ENTITY_TYPE> dataMapper = DataMapperWrapper.getDataMapper(getParameterType());
 
         if (dataMapper == null) {
-            throw new DbException(MessageFormat.format("Could not find any entity of type [{0}] in the provided entityBasePackage [spring.sfly.aws.ddb.entityBasePackage: {1}]",
-                    type.getName(), ApplicationContextUtils.getEnvironment().getProperty("spring.sfly.aws.ddb.entityBasePackage")));
+            throw new DbException(MessageFormat.format("Could not find any entity of type [{0}] in the provided entityBasePackage [org.leo.aws.ddb.entityBasePackage: {1}]",
+                    type.getName(), ApplicationContextUtils.getEnvironment().getProperty("org.leo.aws.ddb.entityBasePackage")));
         }
 
         return dataMapper.getPKMapping().get(PK.Type.HASH_KEY)._1();
