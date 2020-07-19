@@ -2,3 +2,4 @@
 dynamodb-data.iml
 /utils/target
 .idea
+/core/core.iml
