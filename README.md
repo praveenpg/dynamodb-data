@@ -90,6 +90,7 @@ public class UserInfoRepository implements BlockingBaseRepository<UserInfo> {
 }
 ```
 - Querying by Hash key and range key
+- Non Blocking (Preferred)
 ```java
 class UserService {
 @Autowired
@@ -105,13 +106,41 @@ private UserInfoRepository userInfoRepository;
     }
 }
 ```
+- Blocking
+```java
+class UserService {
+@Autowired
+private UserInfoRepository userInfoRepository;
+
+    public UserInfo findByEmailAddressAndDivision(final String emailAddress, final String division) {
+        return userInfoRepository.findByPrimaryKey(PrimaryKey.builder()
+                                                .hashKeyName(userInfoRepository.getHashKeyName())
+                                                .hashKeyValue(emailAddress)
+                                                .rangeKeyName(userInfoRepository.getRangeKeyName())
+                                                .rangeKeyValue(division)
+                                                .build());
+    }
+}
+```
 - Querying by index
+- Non Blocking (Preferred)
 ```java
 class UserService {
     @Autowired
     private UserInfoRepository userInfoRepository;
     
-    public Mono<UserInfo> findByDivision(final String division) {
+    public Flux<UserInfo> findByDivision(final String division) {
+        return userInfoRepository.findByGlobalSecondaryIndex("division-emailAddress-index", division);
+    }
+}
+```
+- Blocking
+```java
+class UserService {
+    @Autowired
+    private UserInfoRepository userInfoRepository;
+    
+    public List<UserInfo> findByDivision(final String division) {
         return userInfoRepository.findByGlobalSecondaryIndex("division-emailAddress-index", division);
     }
 }
