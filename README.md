@@ -66,13 +66,25 @@ public class UserInfo {
 ```
 - Add a repository class. The repository class needs to implement the BaseRepository interface.
 - Querying by Hash Key and Range Key
+- Non Blocking DAO (Preferred)
 ```java
 @DdbRepository(entityClass = UserInfo.class)
-public class UserInfoRepository implements BaseRepository<UserInfo> {
+public class UserInfoRepository implements NonBlockingBaseRepository<UserInfo> {
     public Flux<UserInfo> getByEmailAddress(String emailAddress) {
         return findByHashKey("emailAddress", emailAddress);
     }
     public Flux<UserInfo> getByDivision(final String division) {
+        return findByGlobalSecondaryIndex("division-emailAddress-index", division);
+    }
+}
+```
+- Blocking DAO
+```java
+public class UserInfoRepository implements BlockingBaseRepository<UserInfo> {
+    public List<UserInfo> getByEmailAddress(String emailAddress) {
+        return findByHashKey("emailAddress", emailAddress);
+    }
+    public List<UserInfo> getByDivision(final String division) {
         return findByGlobalSecondaryIndex("division-emailAddress-index", division);
     }
 }
