@@ -85,9 +85,9 @@ private UserInfoRepository userInfoRepository;
 
     public Mono<UserInfo> findByEmailAddressAndDivision(final String emailAddress, final String division) {
         return userInfoRepository.findByPrimaryKey(PrimaryKey.builder()
-                                                .hashKeyName(getHashKeyName())
+                                                .hashKeyName(userInfoRepository.getHashKeyName())
                                                 .hashKeyValue(emailAddress)
-                                                .rangeKeyName(getRangeKeyName())
+                                                .rangeKeyName(userInfoRepository.getRangeKeyName())
                                                 .rangeKeyValue(division)
                                                 .build());
     }`
