@@ -1,8 +1,9 @@
 # dynamodb-data
-An ORM (almost) for dynamoDb
+An Object model (almost) for dynamoDb
 
 ## General Information
-- Project Name: DynamoDB Data
+- Project Name: DynamoDB Data\
+  This project attempts to develop an Object model for AWS DynamoDB database based systems. Entities are developed as POJOs with annotations as shown in the examples below.
 - GIT URL: <https://github.com/praveenpg/dynamodb-data>
 ## Requirements
 - Java 8
