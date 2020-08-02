@@ -1,4 +1,4 @@
-package org.leo.aws.ddb.utils.config;
+package org.leo.aws.ddb.autoconfigure;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

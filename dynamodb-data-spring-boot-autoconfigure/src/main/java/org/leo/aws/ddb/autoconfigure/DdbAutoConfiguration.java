@@ -2,7 +2,6 @@ package org.leo.aws.ddb.autoconfigure;
 
 import org.leo.aws.ddb.config.EntityValidationConfig;
 import org.leo.aws.ddb.repositories.*;
-import org.leo.aws.ddb.utils.config.AwsEnvironmentProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -31,7 +30,7 @@ public class DdbAutoConfiguration {
 
 
     @Bean
-    @ConditionalOnProperty(prefix = "org.leo.aws", value = {"awsAccessKeySecret", "awsAccessKey"})
+    @ConditionalOnProperty(prefix = "org.leo.aws", value = {"aws-access-key-secret", "aws-access-key"})
     public AwsCredentialsProvider staticCredentialsProvider(final AwsEnvironmentProperties dynamoDbProperties) {
         return StaticCredentialsProvider.create(AwsBasicCredentials.create(dynamoDbProperties.getAwsAccessKey(), dynamoDbProperties.getAwsAccessKeySecret()));
     }
@@ -53,7 +52,7 @@ public class DdbAutoConfiguration {
     }
 
     @Bean(name = "entityValidationConfig1")
-    @ConditionalOnProperty(prefix = "org.leo.aws.ddb", value = "entityBasePackage")
+    @ConditionalOnProperty(prefix = "org.leo.aws.ddb", value = "entity-base-package")
     public EntityValidationConfig entityValidationConfig1(final DynamoDbProperties dynamoDbProperties) {
         return new EntityValidationConfig(dynamoDbProperties.getEntityBasePackage());
     }
@@ -66,7 +65,7 @@ public class DdbAutoConfiguration {
     }
 
     @Bean(name = "dataMapperConfigCleanUp1")
-    @ConditionalOnProperty(prefix = "org.leo.aws.ddb", value = "entityBasePackage")
+    @ConditionalOnProperty(prefix = "org.leo.aws.ddb", value = "entity-base-package")
     public DataMapperConfigCleanUp dataMapperConfigCleanUp1(final DynamoDbProperties dynamoDbProperties, final Map<Class, DataMapper> dataMapperMap, final Environment environment) {
         return new DataMapperConfigCleanUp(dynamoDbProperties.getEntityBasePackage(), dataMapperMap, environment);
     }

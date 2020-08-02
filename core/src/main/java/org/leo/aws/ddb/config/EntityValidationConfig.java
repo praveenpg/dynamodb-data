@@ -5,6 +5,8 @@ package org.leo.aws.ddb.config;
 import org.leo.aws.ddb.annotations.DDBTable;
 import org.leo.aws.ddb.exceptions.DbException;
 import org.reflections.Reflections;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 
 import javax.annotation.PostConstruct;
 import java.lang.reflect.Constructor;
@@ -20,7 +22,9 @@ public class EntityValidationConfig {
 
     @PostConstruct
     public void validateEntities() {
-        final Reflections reflections = new Reflections(dtoBasePackage);
+        final Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(
+                dtoBasePackage, ClasspathHelper.contextClassLoader(),
+                ClasspathHelper.staticClassLoader())));
         final Set<Class<?>> entityClasses = reflections.getTypesAnnotatedWith(DDBTable.class);
 
         entityClasses.forEach(entityClass -> {

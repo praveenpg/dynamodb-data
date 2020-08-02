@@ -3,6 +3,8 @@ package org.leo.aws.ddb.repositories;
 
 import org.leo.aws.ddb.annotations.DDBTable;
 import org.reflections.Reflections;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 import org.springframework.core.env.Environment;
 
 import javax.annotation.PostConstruct;
@@ -22,7 +24,9 @@ public class DataMapperConfigCleanUp {
 
     @PostConstruct
     public void mapDataObjectsWithoutMapper() {
-        final Reflections reflections = new Reflections(dtoBasePackage);
+        final Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(
+                dtoBasePackage, ClasspathHelper.contextClassLoader(),
+                ClasspathHelper.staticClassLoader())));
         final Set<Class<?>> annotated = reflections.getTypesAnnotatedWith(DDBTable.class);
 
         annotated.forEach(a -> {
