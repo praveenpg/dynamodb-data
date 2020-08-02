@@ -90,7 +90,7 @@ private UserInfoRepository userInfoRepository;
                                                 .rangeKeyName(userInfoRepository.getRangeKeyName())
                                                 .rangeKeyValue(division)
                                                 .build());
-    }`
+    }
 }
 ```
 - Querying by index
