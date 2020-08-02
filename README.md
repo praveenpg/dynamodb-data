@@ -49,8 +49,8 @@ org:
 - Create an entity class with the following annotation
 ```java
 @DDBTable(name = "ddb-demo-user-info")
-@Data
-@AllArgsConstructor
+@Data //Lombok annotation
+@AllArgsConstructor //Lombok annotation
 public class UserInfo {
     @PK(type = PK.Type.HASH_KEY)
     @GlobalSecondaryIndex(name = "division-emailAddress-index", type = PK.Type.RANGE_KEY, projectionType = GlobalSecondaryIndex.ProjectionType.KEYS_ONLY)
