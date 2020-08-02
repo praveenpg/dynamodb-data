@@ -20,6 +20,7 @@ public class EntityValidationConfig {
         this.dtoBasePackage = dtoBasePackage;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @PostConstruct
     public void validateEntities() {
         final Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(
@@ -29,7 +30,7 @@ public class EntityValidationConfig {
 
         entityClasses.forEach(entityClass -> {
             try {
-                final Constructor constructor = entityClass.getDeclaredConstructor();
+                final Constructor<?> constructor = entityClass.getDeclaredConstructor();
 
                 if(constructor == null) {
                     throw new NoSuchMethodException();
