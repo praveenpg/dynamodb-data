@@ -15,7 +15,7 @@ An Object model (almost) for dynamoDb
 ## Getting Started
 ```xml
         <dependency>
-            <groupId>org.leo.dynamodb</groupId>
+            <groupId>net.leodb.dynamodb</groupId>
             <artifactId>starter</artifactId>
             <version>1.0.0-20200802.053730-1</version>
         </dependency>
