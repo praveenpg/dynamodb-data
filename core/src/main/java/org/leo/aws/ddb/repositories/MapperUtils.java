@@ -15,6 +15,7 @@ import org.leo.aws.ddb.annotations.*;
 import org.springframework.core.env.Environment;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ReflectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -134,6 +135,8 @@ final class MapperUtils {
             if (isAnnotatedCorrectly(annotations)) {
                 final MappedBy mappedBy = !CollectionUtils.isEmpty(annotations) ?
                         (MappedBy) annotations.stream().filter(a -> (a instanceof MappedBy)).findAny().orElse(null) : null;
+                final DbAttribute dbAttribute = !CollectionUtils.isEmpty(annotations) ?
+                        (DbAttribute) annotations.stream().filter(a -> (a instanceof DbAttribute)).findAny().orElse(null) : null;
                 final DateCreated dateCreated = !CollectionUtils.isEmpty(annotations) ?
                         (DateCreated) annotations.stream().filter(a -> (a instanceof DateCreated)).findAny().orElse(null) : null;
                 final DateUpdated dateUpdated = !CollectionUtils.isEmpty(annotations) ?
@@ -183,7 +186,8 @@ final class MapperUtils {
                         }
                     }
                 });
-                fieldNameVal = getFieldName(mappedBy, dateCreated, dateUpdated, field, builder);
+
+                fieldNameVal = getFieldName(mappedBy, dbAttribute, dateCreated, dateUpdated, field, builder);
 
                 mappedFields.put(fieldNameVal, Tuple.of(field, mappedBy));
 
@@ -192,7 +196,7 @@ final class MapperUtils {
                 }
 
             } else {
-                throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "A field can only have one of the following annotation: [MappedBy, DateCreated, DateUpdated]");
+                throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "A field can only have one of the following annotation: [MappedBy, DateCreated, DateUpdated, DbAttribute]");
             }
         }
     }
@@ -203,11 +207,22 @@ final class MapperUtils {
         return dataMapper.getMappedValues(input);
     }
 
-    private static <T> String getFieldName(final MappedBy mappedBy, final DateCreated dateCreated, final DateUpdated dateUpdated, final Field field, final AttributeMapper.Builder<T> builder) {
+    private static <T> String getFieldName(final MappedBy mappedBy,
+                                           final DbAttribute dbAttribute,
+                                           final DateCreated dateCreated,
+                                           final DateUpdated dateUpdated,
+                                           final Field field,
+                                           final AttributeMapper.Builder<T> builder) {
         final String fieldName;
 
-        if (mappedBy != null) {
-            fieldName = mappedBy.value();
+        if (mappedBy != null && !StringUtils.isEmpty(mappedBy.value())) {
+            fieldName = mappedBy.value().trim();
+        } else if (mappedBy != null && StringUtils.isEmpty(mappedBy.value())) {
+            fieldName = field.getName();
+        } else if (dbAttribute != null && !StringUtils.isEmpty(dbAttribute.value())) {
+            fieldName = dbAttribute.value().trim();
+        } else if (dbAttribute != null && StringUtils.isEmpty(dbAttribute.value())) {
+            fieldName = field.getName();
         } else if (dateCreated != null) {
             fieldName = dateCreated.value();
             builder.dateCreatedField(Tuple.of(dateCreated.value(), field));
@@ -225,7 +240,8 @@ final class MapperUtils {
         final List<? extends Annotation> annotationList = CollectionUtils.isEmpty(annotations) ?
                 annotations.stream().filter(a -> (a instanceof MappedBy
                         || a instanceof DateCreated
-                        || a instanceof DateUpdated)).collect(Collectors.toList()) : Collections.emptyList();
+                        || a instanceof DateUpdated)
+                        || a instanceof DbAttribute).collect(Collectors.toList()) : Collections.emptyList();
 
         return CollectionUtils.isEmpty(annotationList) || annotationList.size() == 1;
     }
