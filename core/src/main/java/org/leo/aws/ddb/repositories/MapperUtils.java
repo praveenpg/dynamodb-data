@@ -175,24 +175,7 @@ final class MapperUtils {
                     primaryKeyMapping.put(KeyType.RANGE_KEY, Tuple.of(fieldName, field));
                 }
 
-                gsiList.forEach(gsi -> {
-                    if (gsi != null) {
-                        final GSI.Builder gsiBuilder = globalSecondaryIndexMap.computeIfAbsent(gsi.name(), s -> GSI.builder(gsi.name())
-                                .projectionType(gsi.projectionType()));
-                        final Tuple<String, Field> keyTuple = Tuple.of(fieldName, field);
-
-                        switch (gsi.type()) {
-                            case HASH_KEY:
-                                gsiBuilder.hashKeyTuple(keyTuple);
-                                break;
-                            case RANGE_KEY:
-                                gsiBuilder.rangeKeyTuple(keyTuple);
-                                break;
-                            default:
-                                throw new DbException("Unrecognized key type");
-                        }
-                    }
-                });
+                gsiList.stream().filter(Objects::nonNull).forEach(gsi -> setGsiBuilder(globalSecondaryIndexMap, field, fieldName, gsi));
 
                 fieldNameVal = getFieldName(dbAttribute, dateCreated, dateUpdated, field, builder);
 
@@ -202,9 +185,24 @@ final class MapperUtils {
                     versionAttMap.put(fieldNameVal, Tuple.of(field, dbAttribute));
                 }
 
-            } else {
-                throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "A field can only have one of the following annotation: [MappedBy, DateCreated, DateUpdated, DbAttribute]");
             }
+        }
+    }
+
+    private static void setGsiBuilder(ConcurrentHashMap<String, GSI.Builder> globalSecondaryIndexMap, Field field, String fieldName, Index gsi) {
+        final GSI.Builder gsiBuilder = globalSecondaryIndexMap.computeIfAbsent(gsi.name(), s -> GSI.builder(gsi.name())
+                .projectionType(gsi.projectionType()));
+        final Tuple<String, Field> keyTuple = Tuple.of(fieldName, field);
+
+        switch (gsi.type()) {
+            case HASH_KEY:
+                gsiBuilder.hashKeyTuple(keyTuple);
+                break;
+            case RANGE_KEY:
+                gsiBuilder.rangeKeyTuple(keyTuple);
+                break;
+            default:
+                throw new DbException("Unrecognized key type");
         }
     }
 
@@ -244,7 +242,11 @@ final class MapperUtils {
                 annotations.stream().filter(a -> (a instanceof DateCreated || a instanceof DateUpdated)).collect(Collectors.toList()) : Collections.emptyList();
 
         //A field cannot have both DateCreated and DateUpdated annotation
-        return CollectionUtils.isEmpty(annotationList) || annotationList.size() == 1;
+        if(CollectionUtils.isEmpty(annotationList) || annotationList.size() == 1) {
+            return true;
+        } else {
+            throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "A field can only have one of the following annotation: [DateCreated, DateUpdated]");
+        }
     }
 
     private static boolean isValidPrimaryKeyMapping(final List<Annotation> annotations) {
@@ -254,7 +256,11 @@ final class MapperUtils {
                 annotations.stream().filter(a -> (a instanceof HashKey || a instanceof RangeKey)).collect(Collectors.toList()) : Collections.emptyList();
 
         //A field cannot have both PK and @HashKey/@RangeKey annotation
-        return CollectionUtils.isEmpty(pk) || CollectionUtils.isEmpty(keys);
+        if(CollectionUtils.isEmpty(pk) || CollectionUtils.isEmpty(keys)) {
+            return true;
+        } else {
+            throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "A field can only have one of the following annotation: [PK, (HashKey or RangeKey)]");
+        }
     }
 
     private static boolean isTransient(final List<Annotation> annotations) {
