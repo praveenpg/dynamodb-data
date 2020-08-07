@@ -1,6 +1,6 @@
 package org.leo.aws.ddb.repositories;
 
-import org.leo.aws.ddb.annotations.PK;
+import org.leo.aws.ddb.annotations.KeyType;
 import org.leo.aws.ddb.annotations.ProjectionType;
 import org.leo.aws.ddb.exceptions.DbException;
 import org.leo.aws.ddb.utils.model.Tuple;
@@ -144,7 +144,7 @@ final class GlobalSecondaryIndexImpl implements GSI {
         @Override
         public Builder hashKeyTuple(final Tuple<String, Field> hashKeyTuple) {
             if(this.hashKeyTuple != null) {
-                throw new DbException("Cannot have multiple " + PK.Type.HASH_KEY + " for the same index [" + name + "]");
+                throw new DbException("Cannot have multiple " + KeyType.HASH_KEY + " for the same index [" + name + "]");
             }
 
             this.hashKeyTuple = hashKeyTuple;
@@ -159,7 +159,7 @@ final class GlobalSecondaryIndexImpl implements GSI {
         @Override
         public Builder rangeKeyTuple(final Tuple<String, Field> rangeKeyTuple) {
             if(this.rangeKeyTuple != null) {
-                throw new DbException("Cannot have multiple " + PK.Type.RANGE_KEY + " for the same index [" + name + "]");
+                throw new DbException("Cannot have multiple " + KeyType.RANGE_KEY + " for the same index [" + name + "]");
             }
 
             this.rangeKeyTuple = rangeKeyTuple;

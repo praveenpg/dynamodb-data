@@ -1,8 +1,8 @@
 package org.leo.aws.ddb.repositories;
 
 
-import org.leo.aws.ddb.annotations.MappedBy;
-import org.leo.aws.ddb.annotations.PK;
+import org.leo.aws.ddb.annotations.DbAttribute;
+import org.leo.aws.ddb.annotations.KeyType;
 import org.leo.aws.ddb.exceptions.DbException;
 import org.leo.aws.ddb.model.Page;
 import org.leo.aws.ddb.model.PatchUpdate;
@@ -39,7 +39,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return Range Key name
      */
     default String getRangeKeyName() {
-        return DataMapperWrapper.getDataMapper(getParameterType()).getPKMapping().get(PK.Type.RANGE_KEY)._1();
+        return DataMapperWrapper.getDataMapper(getParameterType()).getPKMapping().get(KeyType.RANGE_KEY)._1();
     }
 
     /**
@@ -52,7 +52,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
     /**
      * @return Primary Key Mapping. This is a combination of the hash key and range key
      */
-    default Map<PK.Type, Tuple<String, Field>> getPkMapping() {
+    default Map<KeyType, Tuple<String, Field>> getPkMapping() {
         return DataMapperWrapper.getDataMapper(getParameterType()).getPKMapping();
     }
 
@@ -72,7 +72,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
                     type.getName(), ApplicationContextUtils.getEnvironment().getProperty("org.leo.aws.ddb.entityBasePackage")));
         }
 
-        return dataMapper.getPKMapping().get(PK.Type.HASH_KEY)._1();
+        return dataMapper.getPKMapping().get(KeyType.HASH_KEY)._1();
     }
 
 
@@ -87,7 +87,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
         final Class<ENTITY_TYPE> paramType = getParameterType();
         final DataMapper<ENTITY_TYPE> dataMapper = DataMapperWrapper.getDataMapper(paramType);
         final PrimaryKey primaryKey = dataMapper.createPKFromItem(item);
-        final Stream<Tuple4<String, Object, Field, MappedBy>> fieldMappings = dataMapper.getMappedValues(item)
+        final Stream<Tuple4<String, Object, Field, DbAttribute>> fieldMappings = dataMapper.getMappedValues(item)
                 .filter(a -> !a._1().equals(primaryKey.getHashKeyName())).filter(a -> !a._1().equals(primaryKey.getRangeKeyName()));
 
         return includeNullValues ? fieldMappings.collect(Collectors.toMap(Tuple4::_1, Tuple4::_2)) :

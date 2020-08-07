@@ -6,6 +6,4 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface RangeKey {
-    KeyType type() default KeyType.ID;
-    String indexName();
 }

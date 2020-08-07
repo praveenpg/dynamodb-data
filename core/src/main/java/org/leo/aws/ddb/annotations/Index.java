@@ -16,7 +16,7 @@ public @interface Index {
      * Key type
      * @return
      */
-    PK.Type type();
+    KeyType type();
 
     /**
      *
