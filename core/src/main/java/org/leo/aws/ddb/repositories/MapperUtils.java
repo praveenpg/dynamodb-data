@@ -124,6 +124,7 @@ final class MapperUtils {
         annotations = Arrays.stream(field.getAnnotations()).filter(a -> (a instanceof DbAttribute ||
                 a instanceof Transient ||
                 a instanceof PK ||
+                a instanceof EmbeddedId ||
                 a instanceof Index ||
                 a instanceof Indices ||
                 a instanceof DateUpdated) ||
