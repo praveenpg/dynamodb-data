@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public interface DataMapper<T> {
+interface DataMapper<T> {
     @SuppressWarnings("unused")
     Logger LOGGER = LoggerFactory.getLogger(DataMapper.class);
 
