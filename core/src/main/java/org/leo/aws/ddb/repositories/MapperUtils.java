@@ -45,7 +45,6 @@ final class MapperUtils {
             final Field[] fields = dataClass.getDeclaredFields();
             final Map<String, Tuple<Field, DbAttribute>> map = new HashMap<>();
             final Map<KeyType, Tuple<String, Field>> primaryKeyMapping = new HashMap<>();
-            final Map<Annotation, Tuple<String, Field>> primaryKeyMapping1 = new HashMap<>();
             final Map<String, Tuple<Field, DbAttribute>> versionAttMap = new HashMap<>();
             final ConcurrentHashMap<String, GSI.Builder> globalSecondaryIndexMap = new ConcurrentHashMap<>();
             final AttributeMapper.Builder<T> builder;
@@ -153,6 +152,7 @@ final class MapperUtils {
                         (Indices) annotations.stream().filter(a -> (a instanceof Indices)).findAny().orElse(null) : null;
                 final VersionAttribute versionAttribute = !CollectionUtils.isEmpty(annotations) ?
                         (VersionAttribute) annotations.stream().filter(a -> (a instanceof VersionAttribute)).findAny().orElse(null) : null;
+                final EmbeddedId embeddedId = !CollectionUtils.isEmpty(annotations) ? (EmbeddedId) annotations.stream().filter(a -> (a instanceof EmbeddedId)).findAny().orElse(null) : null;
                 final String fieldName = dbAttribute != null ? dbAttribute.value() : field.getName();
                 final List<Index> gsiList;
                 final String fieldNameVal;
