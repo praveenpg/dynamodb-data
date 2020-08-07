@@ -5,6 +5,6 @@ import java.lang.annotation.*;
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface GlobalSecondaryIndices {
-    GlobalSecondaryIndex[] indices();
+public @interface Indices {
+    Index[] indices();
 }
