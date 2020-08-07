@@ -1,7 +1,7 @@
 package org.leo.aws.ddb.repositories;
 
-import org.leo.aws.ddb.annotations.GlobalSecondaryIndex;
 import org.leo.aws.ddb.annotations.PK;
+import org.leo.aws.ddb.annotations.ProjectionType;
 import org.leo.aws.ddb.exceptions.DbException;
 import org.leo.aws.ddb.utils.model.Tuple;
 
@@ -12,12 +12,12 @@ final class GlobalSecondaryIndexImpl implements GSI {
     private final String name;
     private final Tuple<String, Field> hashKeyTuple;
     private final Tuple<String, Field> rangeKeyTuple;
-    private final GlobalSecondaryIndex.ProjectionType projectionType;
+    private final ProjectionType projectionType;
 
     private GlobalSecondaryIndexImpl(final String name,
                                      final Tuple<String, Field> hashKeyTuple,
                                      final Tuple<String, Field> rangeKeyTuple,
-                                     final GlobalSecondaryIndex.ProjectionType projectionType) {
+                                     final ProjectionType projectionType) {
         this.name = name;
         this.hashKeyTuple = hashKeyTuple;
         this.rangeKeyTuple = rangeKeyTuple;
@@ -53,7 +53,7 @@ final class GlobalSecondaryIndexImpl implements GSI {
      * @return
      */
     @Override
-    public GlobalSecondaryIndex.ProjectionType getProjectionType() {
+    public ProjectionType getProjectionType() {
         return projectionType;
     }
 
@@ -130,7 +130,7 @@ final class GlobalSecondaryIndexImpl implements GSI {
         private final String name;
         private Tuple<String, Field> hashKeyTuple;
         private Tuple<String, Field> rangeKeyTuple;
-        private GlobalSecondaryIndex.ProjectionType projectionType;
+        private ProjectionType projectionType;
 
         private BuilderImpl(final String name) {
             this.name = name;
@@ -167,7 +167,7 @@ final class GlobalSecondaryIndexImpl implements GSI {
         }
 
         @Override
-        public Builder projectionType(final GlobalSecondaryIndex.ProjectionType projectionType) {
+        public Builder projectionType(final ProjectionType projectionType) {
             if(this.projectionType != null && this.projectionType != projectionType) {
                 throw new DbException("Cannot define different projection types for Hash Key and Range Key [" + name + "]");
             }
@@ -178,7 +178,7 @@ final class GlobalSecondaryIndexImpl implements GSI {
         @Override
         public GSI build() {
             return new GlobalSecondaryIndexImpl(name, hashKeyTuple, rangeKeyTuple, projectionType == null ?
-                    GlobalSecondaryIndex.ProjectionType.KEYS_ONLY : projectionType).validate();
+                    ProjectionType.KEYS_ONLY : projectionType).validate();
         }
     }
 }

@@ -2,6 +2,7 @@ package org.leo.aws.ddb.repositories;
 
 import com.google.common.collect.ImmutableMap;
 import org.leo.aws.ddb.annotations.MappedBy;
+import org.leo.aws.ddb.annotations.ProjectionType;
 import org.leo.aws.ddb.exceptions.DbException;
 import org.leo.aws.ddb.exceptions.OptimisticLockFailureException;
 import org.leo.aws.ddb.model.PrimaryKey;
@@ -12,7 +13,6 @@ import org.leo.aws.ddb.utils.exceptions.Issue;
 import org.leo.aws.ddb.utils.model.Tuple;
 import org.leo.aws.ddb.utils.model.Tuple3;
 import org.leo.aws.ddb.utils.model.Utils;
-import org.leo.aws.ddb.annotations.GlobalSecondaryIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
@@ -150,7 +150,7 @@ class BaseRepositoryUtils {
 
         if (hashKeyValueObj instanceof String) {
             final String hashKeyValue;
-            final Tuple<GlobalSecondaryIndex.ProjectionType, QueryPublisher> queryResponseTuple;
+            final Tuple<ProjectionType, QueryPublisher> queryResponseTuple;
             final Flux<T> returnedDataFromDb;
             final Flux<T> returnData;
             final Class<T> dataClass = dataClassFunc.get();
@@ -168,7 +168,7 @@ class BaseRepositoryUtils {
                     .flatMapIterable(QueryResponse::items)
                     .map(a -> DataMapperWrapper.getDataMapper(dataClass).mapFromValue(a));
 
-            if (queryResponseTuple._1() == GlobalSecondaryIndex.ProjectionType.ALL) {
+            if (queryResponseTuple._1() == ProjectionType.ALL) {
                 returnData = returnedDataFromDb;
             } else {
                 returnData = returnedDataFromDb

@@ -2,7 +2,7 @@ package org.leo.aws.ddb.repositories;
 
 
 
-import org.leo.aws.ddb.annotations.GlobalSecondaryIndex;
+import org.leo.aws.ddb.annotations.ProjectionType;
 import org.leo.aws.ddb.utils.model.Tuple;
 
 import java.lang.reflect.Field;
@@ -27,7 +27,7 @@ interface GSI {
      *
      * @return
      */
-    GlobalSecondaryIndex.ProjectionType getProjectionType();
+    ProjectionType getProjectionType();
 
     /**
      *
@@ -59,7 +59,7 @@ interface GSI {
          * @param projectionType
          * @return
          */
-        Builder projectionType(GlobalSecondaryIndex.ProjectionType projectionType);
+        Builder projectionType(ProjectionType projectionType);
 
         /**
          *

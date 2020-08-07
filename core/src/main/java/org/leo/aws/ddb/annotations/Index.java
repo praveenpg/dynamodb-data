@@ -5,7 +5,7 @@ import java.lang.annotation.*;
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface GlobalSecondaryIndex {
+public @interface Index {
     /**
      * Name of the index
      * @return
@@ -24,8 +24,4 @@ public @interface GlobalSecondaryIndex {
      */
     ProjectionType projectionType();
 
-    @SuppressWarnings("unused")
-    enum ProjectionType {
-        KEYS_ONLY, ALL, INCLUDE
-    }
 }

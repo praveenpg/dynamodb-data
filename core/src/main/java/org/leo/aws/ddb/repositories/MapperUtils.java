@@ -125,8 +125,8 @@ final class MapperUtils {
         annotations = Arrays.stream(field.getAnnotations()).filter(a -> (a instanceof MappedBy ||
                 a instanceof Transient ||
                 a instanceof PK ||
-                a instanceof GlobalSecondaryIndex ||
-                a instanceof GlobalSecondaryIndices ||
+                a instanceof Index ||
+                a instanceof Indices ||
                 a instanceof DateUpdated) ||
                 a instanceof DateCreated ||
                 a instanceof VersionAttribute).collect(Collectors.toList());
@@ -143,14 +143,14 @@ final class MapperUtils {
                         (DateUpdated) annotations.stream().filter(a -> (a instanceof DateUpdated)).findAny().orElse(null) : null;
                 final PK primaryKey = !CollectionUtils.isEmpty(annotations) ?
                         (PK) annotations.stream().filter(a -> (a instanceof PK)).findAny().orElse(null) : null;
-                final GlobalSecondaryIndex gsiElement = !CollectionUtils.isEmpty(annotations) ?
-                        (GlobalSecondaryIndex) annotations.stream().filter(a -> (a instanceof GlobalSecondaryIndex)).findAny().orElse(null) : null;
-                final GlobalSecondaryIndices gsis = !CollectionUtils.isEmpty(annotations) ?
-                        (GlobalSecondaryIndices) annotations.stream().filter(a -> (a instanceof GlobalSecondaryIndices)).findAny().orElse(null) : null;
+                final Index gsiElement = !CollectionUtils.isEmpty(annotations) ?
+                        (Index) annotations.stream().filter(a -> (a instanceof Index)).findAny().orElse(null) : null;
+                final Indices gsis = !CollectionUtils.isEmpty(annotations) ?
+                        (Indices) annotations.stream().filter(a -> (a instanceof Indices)).findAny().orElse(null) : null;
                 final VersionAttribute versionAttribute = !CollectionUtils.isEmpty(annotations) ?
                         (VersionAttribute) annotations.stream().filter(a -> (a instanceof VersionAttribute)).findAny().orElse(null) : null;
                 final String fieldName = mappedBy != null ? mappedBy.value() : field.getName();
-                final List<GlobalSecondaryIndex> gsiList;
+                final List<Index> gsiList;
                 final String fieldNameVal;
                 final Class<?> fieldClass = field.getType();
 

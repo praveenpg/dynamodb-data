@@ -2,7 +2,7 @@ package org.leo.aws.ddb.repositories;
 
 
 import org.leo.aws.ddb.annotations.DdbRepository;
-import org.leo.aws.ddb.annotations.GlobalSecondaryIndex;
+import org.leo.aws.ddb.annotations.ProjectionType;
 import org.leo.aws.ddb.exceptions.DbException;
 import org.leo.aws.ddb.model.Page;
 import org.leo.aws.ddb.utils.Expr;
@@ -33,11 +33,11 @@ final class RepositoryUtils {
     private RepositoryUtils() {
     }
 
-    static <T> Tuple<GlobalSecondaryIndex.ProjectionType, QueryPublisher> getDataFromIndex(final String indexName,
-                                                                                           final String hashKeyValue,
-                                                                                           final Optional<?> rangeKeyValue,
-                                                                                           final Class<T> dataClass,
-                                                                                           final Expr filterExpressions) {
+    static <T> Tuple<ProjectionType, QueryPublisher> getDataFromIndex(final String indexName,
+                                                                      final String hashKeyValue,
+                                                                      final Optional<?> rangeKeyValue,
+                                                                      final Class<T> dataClass,
+                                                                      final Expr filterExpressions) {
 
         final AttributeMapper<T> attributeMapper = (AttributeMapper<T>) MapperUtils.ATTRIBUTE_MAPPING_MAP.get(dataClass.getName());
         final GSI secondaryIndex = attributeMapper.getGlobalSecondaryIndexMap().get(indexName);
