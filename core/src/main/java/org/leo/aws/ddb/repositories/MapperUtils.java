@@ -49,7 +49,6 @@ final class MapperUtils {
             final ConcurrentHashMap<String, GSI.Builder> globalSecondaryIndexMap = new ConcurrentHashMap<>();
             final AttributeMapper.Builder<T> builder;
             final List<Field> fieldList;
-            final List<Field> pkFields;
             final List<Field> hashKeyFields;
             final List<Field> rangeKeyFields;
 
@@ -68,11 +67,10 @@ final class MapperUtils {
 
             builder = AttributeMapper.builder();
 
-            pkFields = fieldList.stream().filter(a -> (a.isAnnotationPresent(PK.class))).collect(Collectors.toList());
             hashKeyFields = fieldList.stream().filter(a -> (a.isAnnotationPresent(HashKey.class))).collect(Collectors.toList());
             rangeKeyFields = fieldList.stream().filter(a -> (a.isAnnotationPresent(RangeKey.class))).collect(Collectors.toList());
 
-            validatePkAnnotations(pkFields, hashKeyFields, rangeKeyFields);
+            validatePkAnnotations(hashKeyFields, rangeKeyFields);
 
             fieldList.forEach(field -> setFieldMappings(map, primaryKeyMapping, globalSecondaryIndexMap, versionAttMap, field, builder));
 
@@ -91,11 +89,10 @@ final class MapperUtils {
         });
     }
 
-    private static void validatePkAnnotations(List<Field> pkFields, List<Field> hashKeyFields, List<Field> rangeKeyFields) {
-        final long countOfPks = Stream.of(pkFields, hashKeyFields).filter(a -> !CollectionUtils.isEmpty(a)).count();
+    private static void validatePkAnnotations(List<Field> hashKeyFields, List<Field> rangeKeyFields) {
 
-        if(countOfPks > 1L) {
-            throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "Cannot mix @HashKey, @PK and @EmbeddedId at the entity class");
+        if(CollectionUtils.isEmpty(hashKeyFields)) {
+            throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "An entity class should have at least one hash key");
         }
 
         if(!CollectionUtils.isEmpty(hashKeyFields) && hashKeyFields.size() > 1) {
@@ -151,7 +148,6 @@ final class MapperUtils {
         field.setAccessible(true);
         annotations = Arrays.stream(field.getAnnotations()).filter(a -> (a instanceof DbAttribute ||
                 a instanceof Transient ||
-                a instanceof PK ||
                 a instanceof Index ||
                 a instanceof Indices ||
                 a instanceof DateUpdated) ||
@@ -161,15 +157,13 @@ final class MapperUtils {
                 a instanceof VersionAttribute).collect(Collectors.toList());
 
         if (!isTransient(annotations)) {
-            if (isAnnotatedCorrectly(annotations) && isValidPrimaryKeyMapping(annotations)) {
+            if (isAnnotatedCorrectly(annotations)) {
                 final DbAttribute dbAttribute = !CollectionUtils.isEmpty(annotations) ?
                         (DbAttribute) annotations.stream().filter(a -> (a instanceof DbAttribute)).findAny().orElse(null) : null;
                 final DateCreated dateCreated = !CollectionUtils.isEmpty(annotations) ?
                         (DateCreated) annotations.stream().filter(a -> (a instanceof DateCreated)).findAny().orElse(null) : null;
                 final DateUpdated dateUpdated = !CollectionUtils.isEmpty(annotations) ?
                         (DateUpdated) annotations.stream().filter(a -> (a instanceof DateUpdated)).findAny().orElse(null) : null;
-                final PK primaryKey = !CollectionUtils.isEmpty(annotations) ?
-                        (PK) annotations.stream().filter(a -> (a instanceof PK)).findAny().orElse(null) : null;
                 final HashKey hashKey = !CollectionUtils.isEmpty(annotations) ?
                         (HashKey) annotations.stream().filter(a -> (a instanceof HashKey)).findAny().orElse(null) : null;
                 final RangeKey rangeKey = !CollectionUtils.isEmpty(annotations) ?
@@ -195,9 +189,7 @@ final class MapperUtils {
 
                 gsiList = gsis != null ? Arrays.asList(gsis.indices()) : Collections.singletonList(gsiElement);
 
-                if (primaryKey != null) {
-                    primaryKeyMapping.put(primaryKey.type(), Tuple.of(fieldName, field));
-                } else if(hashKey != null) {
+                if(hashKey != null) {
                     primaryKeyMapping.put(KeyType.HASH_KEY, Tuple.of(fieldName, field));
                 } else if(rangeKey != null) {
                     primaryKeyMapping.put(KeyType.RANGE_KEY, Tuple.of(fieldName, field));
@@ -274,20 +266,6 @@ final class MapperUtils {
             return true;
         } else {
             throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "A field can only have one of the following annotation: [DateCreated, DateUpdated]");
-        }
-    }
-
-    private static boolean isValidPrimaryKeyMapping(final List<Annotation> annotations) {
-        final List<? extends Annotation> pk = CollectionUtils.isEmpty(annotations) ?
-                annotations.stream().filter(a -> (a instanceof PK)).collect(Collectors.toList()) : Collections.emptyList();
-        final List<? extends Annotation> keys = CollectionUtils.isEmpty(annotations) ?
-                annotations.stream().filter(a -> (a instanceof HashKey || a instanceof RangeKey)).collect(Collectors.toList()) : Collections.emptyList();
-
-        //A field cannot have both PK and @HashKey/@RangeKey annotation
-        if(CollectionUtils.isEmpty(pk) || CollectionUtils.isEmpty(keys)) {
-            return true;
-        } else {
-            throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "A field can only have one of the following annotation: [PK, (HashKey or RangeKey)]");
         }
     }
 
