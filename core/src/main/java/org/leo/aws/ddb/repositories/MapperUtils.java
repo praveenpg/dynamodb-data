@@ -49,12 +49,15 @@ final class MapperUtils {
             final ConcurrentHashMap<String, GSI.Builder> globalSecondaryIndexMap = new ConcurrentHashMap<>();
             final AttributeMapper.Builder<T> builder;
             final List<Field> fieldList;
+            final List<Field> pkFields;
+            final List<Field> hashKeyFields;
+            final List<Field> rangeKeyFields;
 
             if(VersionedEntity.class.isAssignableFrom(dataClass)) {
-                fieldList = ImmutableList.<Field>builder().addAll(Arrays.asList(fields))
-                        .add(ReflectionUtils.findField(VersionedEntity.class, "version")).build();
+                fieldList = filterFields(ImmutableList.<Field>builder().addAll(Arrays.asList(fields))
+                        .add(ReflectionUtils.findField(VersionedEntity.class, "version")).build());
             } else {
-                fieldList = ImmutableList.copyOf(fields);
+                fieldList = filterFields(ImmutableList.copyOf(fields));
             }
 
             if (table != null) {
@@ -65,11 +68,13 @@ final class MapperUtils {
 
             builder = AttributeMapper.builder();
 
-            fieldList.stream()
-                    .filter(field -> !field.getName().contains("ajc$"))
-                    .filter(field -> !Modifier.isStatic(field.getModifiers()))
-                    .filter(field -> !Modifier.isTransient(field.getModifiers()))
-                    .forEach(field -> setFieldMappings(map, primaryKeyMapping, globalSecondaryIndexMap, versionAttMap, field, builder));
+            pkFields = fieldList.stream().filter(a -> (a.isAnnotationPresent(PK.class))).collect(Collectors.toList());
+            hashKeyFields = fieldList.stream().filter(a -> (a.isAnnotationPresent(HashKey.class))).collect(Collectors.toList());
+            rangeKeyFields = fieldList.stream().filter(a -> (a.isAnnotationPresent(RangeKey.class))).collect(Collectors.toList());
+
+            validatePkAnnotations(pkFields, hashKeyFields, rangeKeyFields);
+
+            fieldList.forEach(field -> setFieldMappings(map, primaryKeyMapping, globalSecondaryIndexMap, versionAttMap, field, builder));
 
             if (!CollectionUtils.isEmpty(versionAttMap) && versionAttMap.size() > 1) {
                 throw new DbException("Entity cannot have more than one version attribute");
@@ -84,6 +89,30 @@ final class MapperUtils {
                     .tableName(tableName)
                     .build());
         });
+    }
+
+    private static void validatePkAnnotations(List<Field> pkFields, List<Field> hashKeyFields, List<Field> rangeKeyFields) {
+        final long countOfPks = Stream.of(pkFields, hashKeyFields).filter(a -> !CollectionUtils.isEmpty(a)).count();
+
+        if(countOfPks > 1L) {
+            throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "Cannot mix @HashKey, @PK and @EmbeddedId at the entity class");
+        }
+
+        if(!CollectionUtils.isEmpty(hashKeyFields) && hashKeyFields.size() > 1) {
+            throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "Cannot have more than 1 field annotated with @HashKey at the entity class");
+        }
+
+        if(!CollectionUtils.isEmpty(rangeKeyFields) && rangeKeyFields.size() > 1) {
+            throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "Cannot have more than 1 field annotated with @RangeKey at the entity class");
+        }
+    }
+
+    private static List<Field> filterFields(final List<Field> fields) {
+        return fields.stream()
+                .filter(field -> !field.getName().contains("ajc$"))
+                .filter(field -> !Modifier.isStatic(field.getModifiers()))
+                .filter(field -> !Modifier.isTransient(field.getModifiers()))
+                .collect(Collectors.toList());
     }
 
     static <T> Stream<Tuple4<String, Object, Field, DbAttribute>> getMappedValues(final T input, final String parameterType) {
@@ -123,7 +152,6 @@ final class MapperUtils {
         annotations = Arrays.stream(field.getAnnotations()).filter(a -> (a instanceof DbAttribute ||
                 a instanceof Transient ||
                 a instanceof PK ||
-                a instanceof EmbeddedId ||
                 a instanceof Index ||
                 a instanceof Indices ||
                 a instanceof DateUpdated) ||
@@ -152,7 +180,6 @@ final class MapperUtils {
                         (Indices) annotations.stream().filter(a -> (a instanceof Indices)).findAny().orElse(null) : null;
                 final VersionAttribute versionAttribute = !CollectionUtils.isEmpty(annotations) ?
                         (VersionAttribute) annotations.stream().filter(a -> (a instanceof VersionAttribute)).findAny().orElse(null) : null;
-                final EmbeddedId embeddedId = !CollectionUtils.isEmpty(annotations) ? (EmbeddedId) annotations.stream().filter(a -> (a instanceof EmbeddedId)).findAny().orElse(null) : null;
                 final String fieldName = dbAttribute != null ? dbAttribute.value() : field.getName();
                 final List<Index> gsiList;
                 final String fieldNameVal;

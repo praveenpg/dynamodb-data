@@ -27,10 +27,10 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unchecked"})
-final class RepositoryUtils {
+final class RepositoryQueryUtils {
     private static final ConcurrentHashMap<String, Class<?>> REPO_PARAMETER_TYPE_MAP = new ConcurrentHashMap<>();
 
-    private RepositoryUtils() {
+    private RepositoryQueryUtils() {
     }
 
     static <T> Tuple<ProjectionType, QueryPublisher> getDataFromIndex(final String indexName,

@@ -161,7 +161,7 @@ class BaseRepositoryUtils {
 
             hashKeyValue = (String) hashKeyValueObj;
 
-            queryResponseTuple = RepositoryUtils.getDataFromIndex(indexName, hashKeyValue, Optional.ofNullable(rangeKeyValue), dataClass, filterExpression);
+            queryResponseTuple = RepositoryQueryUtils.getDataFromIndex(indexName, hashKeyValue, Optional.ofNullable(rangeKeyValue), dataClass, filterExpression);
 
             returnedDataFromDb = Flux
                     .from(queryResponseTuple._2())
