@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
-import org.leo.aws.ddb.annotations.MappedBy;
+import org.leo.aws.ddb.annotations.DbAttribute;
 import org.leo.aws.ddb.exceptions.DbException;
 import org.leo.aws.ddb.utils.exceptions.Issue;
 import org.leo.aws.ddb.utils.exceptions.UtilsException;
@@ -332,8 +332,8 @@ public final class DbUtils {
         return action;
     }
 
-    public static void checkForNullFields(final MappedBy mappedBy, final Object value, final String fieldName) {
-        if (mappedBy != null && !mappedBy.nullable() && value == null) {
+    public static void checkForNullFields(final DbAttribute dbAttribute, final Object value, final String fieldName) {
+        if (dbAttribute != null && !dbAttribute.nullable() && value == null) {
             throw new DbException(fieldName + " cannot be null...");
         }
     }

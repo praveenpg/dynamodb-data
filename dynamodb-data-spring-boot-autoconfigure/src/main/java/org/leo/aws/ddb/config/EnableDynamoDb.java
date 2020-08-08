@@ -1,6 +1,6 @@
 package org.leo.aws.ddb.config;
 
-import org.leo.aws.ddb.autoconfigure.DdbAutoConfiguration;
+import org.leo.aws.ddb.repositories.DdbAutoConfiguration;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.ElementType;

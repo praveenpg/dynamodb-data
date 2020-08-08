@@ -2,8 +2,8 @@ package org.leo.aws.ddb.repositories;
 
 
 
-import org.leo.aws.ddb.annotations.MappedBy;
-import org.leo.aws.ddb.annotations.PK;
+import org.leo.aws.ddb.annotations.DbAttribute;
+import org.leo.aws.ddb.annotations.KeyType;
 import org.leo.aws.ddb.utils.model.Tuple;
 
 import java.lang.reflect.Constructor;
@@ -13,24 +13,24 @@ import java.util.Map;
 @SuppressWarnings({"unused", "WeakerAccess"})
 final class AttributeMapper<T> {
     private final Class<T> mappedClass;
-    private final Map<String, Tuple<Field, MappedBy>> mappedFields;
+    private final Map<String, Tuple<Field, DbAttribute>> mappedFields;
     private final Constructor<T> constructor;
-    private final Map<PK.Type, Tuple<String, Field>> primaryKeyMapping;
+    private final Map<KeyType, Tuple<String, Field>> primaryKeyMapping;
     private final Map<String, GSI> globalSecondaryIndexMap;
     private final String tableName;
     private final Tuple<String, Field> dateUpdatedField;
     private final Tuple<String, Field> dateCreatedField;
-    private final Tuple<Field, MappedBy> versionAttributeField;
+    private final Tuple<Field, DbAttribute> versionAttributeField;
 
     private AttributeMapper(final Class<T> mappedClass,
-                            final Map<String, Tuple<Field, MappedBy>> mappedFields,
+                            final Map<String, Tuple<Field, DbAttribute>> mappedFields,
                             final Constructor<T> constructor,
-                            final Map<PK.Type, Tuple<String, Field>> primaryKeyMapping,
+                            final Map<KeyType, Tuple<String, Field>> primaryKeyMapping,
                             final String tableName,
                             final Tuple<String, Field> dateUpdatedField,
                             final Tuple<String, Field> dateCreatedField,
                             final Map<String, GSI> globalSecondaryIndexMap,
-                            final Tuple<Field, MappedBy> versionAttributeField) {
+                            final Tuple<Field, DbAttribute> versionAttributeField) {
 
         this.mappedClass = mappedClass;
         this.mappedFields = mappedFields;
@@ -51,7 +51,7 @@ final class AttributeMapper<T> {
         return constructor;
     }
 
-    public Map<PK.Type, Tuple<String, Field>> getPrimaryKeyMapping() {
+    public Map<KeyType, Tuple<String, Field>> getPrimaryKeyMapping() {
         return primaryKeyMapping;
     }
 
@@ -72,11 +72,11 @@ final class AttributeMapper<T> {
         return globalSecondaryIndexMap;
     }
 
-    public Map<String, Tuple<Field, MappedBy>> getMappedFields() {
+    public Map<String, Tuple<Field, DbAttribute>> getMappedFields() {
         return mappedFields;
     }
 
-    public Tuple<Field, MappedBy> getVersionAttributeField() {
+    public Tuple<Field, DbAttribute> getVersionAttributeField() {
         return versionAttributeField;
     }
 
@@ -88,29 +88,29 @@ final class AttributeMapper<T> {
     public interface Builder<T> {
         Builder<T> mappedClass(Class<T> mappedClass);
 
-        Builder<T> mappedFields(Map<String, Tuple<Field, MappedBy>> mappedFields);
+        Builder<T> mappedFields(Map<String, Tuple<Field, DbAttribute>> mappedFields);
 
         Builder<T> constructor(Constructor<T> constructor);
-        Builder<T> primaryKeyMapping(Map<PK.Type, Tuple<String, Field>> primaryKeyMapping);
+        Builder<T> primaryKeyMapping(Map<KeyType, Tuple<String, Field>> primaryKeyMapping);
         Builder<T> tableName(String tableName);
         Builder<T> dateUpdatedField(Tuple<String, Field> dateUpdatedField);
         Builder<T> dateCreatedField(Tuple<String, Field> dateCreatedField);
         Builder<T> globalSecondaryIndexMap(Map<String, GSI> globalSecondaryIndexMap);
-        Builder<T> versionAttributeField(Tuple<Field, MappedBy> versionAttributeField);
+        Builder<T> versionAttributeField(Tuple<Field, DbAttribute> versionAttributeField);
 
         AttributeMapper<T> build();
     }
 
     private static class AttributeMapperBuilder<T> implements Builder<T> {
         private Class<T> mappedClass;
-        private Map<String, Tuple<Field, MappedBy>> mappedFields;
+        private Map<String, Tuple<Field, DbAttribute>> mappedFields;
         private Constructor<T> constructor;
-        private Map<PK.Type, Tuple<String, Field>> primaryKeyMapping;
+        private Map<KeyType, Tuple<String, Field>> primaryKeyMapping;
         private String tableName;
         private Tuple<String, Field> dateUpdatedField;
         private Tuple<String, Field> dateCreatedField;
         private Map<String, GSI> globalSecondaryIndexMap;
-        private Tuple<Field, MappedBy> versionAttributeField;
+        private Tuple<Field, DbAttribute> versionAttributeField;
 
         @Override
         public Builder<T> mappedClass(final Class<T> mappedClass) {
@@ -119,7 +119,7 @@ final class AttributeMapper<T> {
         }
 
         @Override
-        public Builder<T> mappedFields(final Map<String, Tuple<Field, MappedBy>> mappedFields) {
+        public Builder<T> mappedFields(final Map<String, Tuple<Field, DbAttribute>> mappedFields) {
             this.mappedFields = mappedFields;
             return this;
         }
@@ -131,7 +131,7 @@ final class AttributeMapper<T> {
         }
 
         @Override
-        public Builder<T> primaryKeyMapping(final Map<PK.Type, Tuple<String, Field>> primaryKeyMapping) {
+        public Builder<T> primaryKeyMapping(final Map<KeyType, Tuple<String, Field>> primaryKeyMapping) {
             this.primaryKeyMapping = primaryKeyMapping;
             return this;
         }
@@ -162,7 +162,7 @@ final class AttributeMapper<T> {
         }
 
         @Override
-        public Builder<T> versionAttributeField(final Tuple<Field, MappedBy> versionAttributeField) {
+        public Builder<T> versionAttributeField(final Tuple<Field, DbAttribute> versionAttributeField) {
             this.versionAttributeField = versionAttributeField;
 
             return this;

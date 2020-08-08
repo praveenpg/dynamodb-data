@@ -5,7 +5,7 @@ import java.lang.annotation.*;
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface MappedBy {
-    String value();
+public @interface DbAttribute {
+    String value() default "";
     boolean nullable() default true;
 }

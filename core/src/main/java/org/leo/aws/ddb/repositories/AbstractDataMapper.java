@@ -1,7 +1,7 @@
 package org.leo.aws.ddb.repositories;
 
 
-import org.leo.aws.ddb.annotations.PK;
+import org.leo.aws.ddb.annotations.KeyType;
 import org.leo.aws.ddb.utils.model.Tuple;
 
 import java.lang.reflect.Field;
@@ -21,7 +21,7 @@ abstract class AbstractDataMapper<T> implements DataMapper<T> {
      * @return Hash key of the DDB table
      */
     protected String getHashKey() {
-        final PK.Type keyType = PK.Type.HASH_KEY;
+        final KeyType keyType = KeyType.HASH_KEY;
         return getPKKey(keyType);
     }
 
@@ -29,14 +29,14 @@ abstract class AbstractDataMapper<T> implements DataMapper<T> {
      * @return Range key of the DDB table
      */
     protected String getRangeKey() {
-        final PK.Type keyType = PK.Type.RANGE_KEY;
+        final KeyType keyType = KeyType.RANGE_KEY;
         return getPKKey(keyType);
     }
 
     @SuppressWarnings("unchecked")
-    private String getPKKey(final PK.Type keyType) {
+    private String getPKKey(final KeyType keyType) {
         final AttributeMapper<T> fieldMapping = (AttributeMapper<T>) MapperUtils.ATTRIBUTE_MAPPING_MAP.get(getParameterType().getName());
-        final Map<PK.Type, Tuple<String, Field>> pkMapping = fieldMapping.getPrimaryKeyMapping();
+        final Map<KeyType, Tuple<String, Field>> pkMapping = fieldMapping.getPrimaryKeyMapping();
 
         return pkMapping.get(keyType)._2().getName();
     }

@@ -1,8 +1,7 @@
 package org.leo.aws.ddb.repositories;
 
 import com.google.common.collect.ImmutableList;
-
-
+import org.leo.aws.ddb.annotations.*;
 import org.leo.aws.ddb.exceptions.DbException;
 import org.leo.aws.ddb.model.VersionedEntity;
 import org.leo.aws.ddb.utils.exceptions.Issue;
@@ -11,10 +10,10 @@ import org.leo.aws.ddb.utils.model.Tuple;
 import org.leo.aws.ddb.utils.model.Tuple3;
 import org.leo.aws.ddb.utils.model.Tuple4;
 import org.leo.aws.ddb.utils.model.Utils;
-import org.leo.aws.ddb.annotations.*;
 import org.springframework.core.env.Environment;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ReflectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -44,18 +43,21 @@ final class MapperUtils {
             final Constructor<T> constructor = constructor(dataClass);
             final DDBTable table = dataClass.getAnnotation(DDBTable.class);
             final Field[] fields = dataClass.getDeclaredFields();
-            final Map<String, Tuple<Field, MappedBy>> map = new HashMap<>();
-            final Map<PK.Type, Tuple<String, Field>> primaryKeyMapping = new HashMap<>();
-            final Map<String, Tuple<Field, MappedBy>> versionAttMap = new HashMap<>();
+            final Map<String, Tuple<Field, DbAttribute>> map = new HashMap<>();
+            final Map<KeyType, Tuple<String, Field>> primaryKeyMapping = new HashMap<>();
+            final Map<String, Tuple<Field, DbAttribute>> versionAttMap = new HashMap<>();
             final ConcurrentHashMap<String, GSI.Builder> globalSecondaryIndexMap = new ConcurrentHashMap<>();
             final AttributeMapper.Builder<T> builder;
             final List<Field> fieldList;
+            final List<Field> pkFields;
+            final List<Field> hashKeyFields;
+            final List<Field> rangeKeyFields;
 
             if(VersionedEntity.class.isAssignableFrom(dataClass)) {
-                fieldList = ImmutableList.<Field>builder().addAll(Arrays.asList(fields))
-                        .add(ReflectionUtils.findField(VersionedEntity.class, "version")).build();
+                fieldList = filterFields(ImmutableList.<Field>builder().addAll(Arrays.asList(fields))
+                        .add(ReflectionUtils.findField(VersionedEntity.class, "version")).build());
             } else {
-                fieldList = ImmutableList.copyOf(fields);
+                fieldList = filterFields(ImmutableList.copyOf(fields));
             }
 
             if (table != null) {
@@ -66,11 +68,13 @@ final class MapperUtils {
 
             builder = AttributeMapper.builder();
 
-            fieldList.stream()
-                    .filter(field -> !field.getName().contains("ajc$"))
-                    .filter(field -> !Modifier.isStatic(field.getModifiers()))
-                    .filter(field -> !Modifier.isTransient(field.getModifiers()))
-                    .forEach(field -> setFieldMappings(map, primaryKeyMapping, field, globalSecondaryIndexMap, versionAttMap, builder));
+            pkFields = fieldList.stream().filter(a -> (a.isAnnotationPresent(PK.class))).collect(Collectors.toList());
+            hashKeyFields = fieldList.stream().filter(a -> (a.isAnnotationPresent(HashKey.class))).collect(Collectors.toList());
+            rangeKeyFields = fieldList.stream().filter(a -> (a.isAnnotationPresent(RangeKey.class))).collect(Collectors.toList());
+
+            validatePkAnnotations(pkFields, hashKeyFields, rangeKeyFields);
+
+            fieldList.forEach(field -> setFieldMappings(map, primaryKeyMapping, globalSecondaryIndexMap, versionAttMap, field, builder));
 
             if (!CollectionUtils.isEmpty(versionAttMap) && versionAttMap.size() > 1) {
                 throw new DbException("Entity cannot have more than one version attribute");
@@ -87,10 +91,34 @@ final class MapperUtils {
         });
     }
 
-    static <T> Stream<Tuple4<String, Object, Field, MappedBy>> getMappedValues(final T input, final String parameterType) {
+    private static void validatePkAnnotations(List<Field> pkFields, List<Field> hashKeyFields, List<Field> rangeKeyFields) {
+        final long countOfPks = Stream.of(pkFields, hashKeyFields).filter(a -> !CollectionUtils.isEmpty(a)).count();
+
+        if(countOfPks > 1L) {
+            throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "Cannot mix @HashKey, @PK and @EmbeddedId at the entity class");
+        }
+
+        if(!CollectionUtils.isEmpty(hashKeyFields) && hashKeyFields.size() > 1) {
+            throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "Cannot have more than 1 field annotated with @HashKey at the entity class");
+        }
+
+        if(!CollectionUtils.isEmpty(rangeKeyFields) && rangeKeyFields.size() > 1) {
+            throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "Cannot have more than 1 field annotated with @RangeKey at the entity class");
+        }
+    }
+
+    private static List<Field> filterFields(final List<Field> fields) {
+        return fields.stream()
+                .filter(field -> !field.getName().contains("ajc$"))
+                .filter(field -> !Modifier.isStatic(field.getModifiers()))
+                .filter(field -> !Modifier.isTransient(field.getModifiers()))
+                .collect(Collectors.toList());
+    }
+
+    static <T> Stream<Tuple4<String, Object, Field, DbAttribute>> getMappedValues(final T input, final String parameterType) {
         final AttributeMapper<T> fieldMapping = (AttributeMapper<T>) ATTRIBUTE_MAPPING_MAP.get(parameterType);
-        final Map<String, Tuple<Field, MappedBy>> fieldMap = fieldMapping.getMappedFields();
-        final Map<PK.Type, Tuple<String, Field>> pkMapping = fieldMapping.getPrimaryKeyMapping();
+        final Map<String, Tuple<Field, DbAttribute>> fieldMap = fieldMapping.getMappedFields();
+        final Map<KeyType, Tuple<String, Field>> pkMapping = fieldMapping.getPrimaryKeyMapping();
         final Set<String> pkFields = pkMapping.values().stream().map(Tuple::_1).collect(Collectors.toSet());
 
         return fieldMap.entrySet().stream()
@@ -99,10 +127,10 @@ final class MapperUtils {
                 .filter(a -> !pkFields.contains(a._1()));
     }
 
-    static <T> Stream<Tuple3<String, Field, MappedBy>> getMappedValues(final String parameterType) {
+    static <T> Stream<Tuple3<String, Field, DbAttribute>> getMappedValues(final String parameterType) {
         final AttributeMapper<T> fieldMapping = (AttributeMapper<T>) ATTRIBUTE_MAPPING_MAP.get(parameterType);
-        final Map<String, Tuple<Field, MappedBy>> fieldMap = fieldMapping.getMappedFields();
-        final Map<PK.Type, Tuple<String, Field>> pkMapping = fieldMapping.getPrimaryKeyMapping();
+        final Map<String, Tuple<Field, DbAttribute>> fieldMap = fieldMapping.getMappedFields();
+        final Map<KeyType, Tuple<String, Field>> pkMapping = fieldMapping.getPrimaryKeyMapping();
         final Set<String> pkFields = pkMapping.values().stream().map(Tuple::_1).collect(Collectors.toSet());
 
         return fieldMap.entrySet().stream()
@@ -112,41 +140,47 @@ final class MapperUtils {
     }
 
 
-    private static <T> void setFieldMappings(final Map<String, Tuple<Field, MappedBy>> mappedFields,
-                                             final Map<PK.Type, Tuple<String, Field>> primaryKeyMapping,
-                                             final Field field,
+    private static <T> void setFieldMappings(final Map<String, Tuple<Field, DbAttribute>> mappedFields,
+                                             final Map<KeyType, Tuple<String, Field>> primaryKeyMapping,
                                              final ConcurrentHashMap<String, GSI.Builder> globalSecondaryIndexMap,
-                                             final Map<String, Tuple<Field, MappedBy>> versionAttMap,
+                                             final Map<String, Tuple<Field, DbAttribute>> versionAttMap,
+                                             final Field field,
                                              final AttributeMapper.Builder<T> builder) {
         final List<Annotation> annotations;
 
         field.setAccessible(true);
-        annotations = Arrays.stream(field.getAnnotations()).filter(a -> (a instanceof MappedBy ||
+        annotations = Arrays.stream(field.getAnnotations()).filter(a -> (a instanceof DbAttribute ||
                 a instanceof Transient ||
                 a instanceof PK ||
                 a instanceof Index ||
                 a instanceof Indices ||
                 a instanceof DateUpdated) ||
                 a instanceof DateCreated ||
+                a instanceof HashKey ||
+                a instanceof RangeKey ||
                 a instanceof VersionAttribute).collect(Collectors.toList());
 
         if (!isTransient(annotations)) {
-            if (isAnnotatedCorrectly(annotations)) {
-                final MappedBy mappedBy = !CollectionUtils.isEmpty(annotations) ?
-                        (MappedBy) annotations.stream().filter(a -> (a instanceof MappedBy)).findAny().orElse(null) : null;
+            if (isAnnotatedCorrectly(annotations) && isValidPrimaryKeyMapping(annotations)) {
+                final DbAttribute dbAttribute = !CollectionUtils.isEmpty(annotations) ?
+                        (DbAttribute) annotations.stream().filter(a -> (a instanceof DbAttribute)).findAny().orElse(null) : null;
                 final DateCreated dateCreated = !CollectionUtils.isEmpty(annotations) ?
                         (DateCreated) annotations.stream().filter(a -> (a instanceof DateCreated)).findAny().orElse(null) : null;
                 final DateUpdated dateUpdated = !CollectionUtils.isEmpty(annotations) ?
                         (DateUpdated) annotations.stream().filter(a -> (a instanceof DateUpdated)).findAny().orElse(null) : null;
                 final PK primaryKey = !CollectionUtils.isEmpty(annotations) ?
                         (PK) annotations.stream().filter(a -> (a instanceof PK)).findAny().orElse(null) : null;
+                final HashKey hashKey = !CollectionUtils.isEmpty(annotations) ?
+                        (HashKey) annotations.stream().filter(a -> (a instanceof HashKey)).findAny().orElse(null) : null;
+                final RangeKey rangeKey = !CollectionUtils.isEmpty(annotations) ?
+                        (RangeKey) annotations.stream().filter(a -> (a instanceof RangeKey)).findAny().orElse(null) : null;
                 final Index gsiElement = !CollectionUtils.isEmpty(annotations) ?
                         (Index) annotations.stream().filter(a -> (a instanceof Index)).findAny().orElse(null) : null;
                 final Indices gsis = !CollectionUtils.isEmpty(annotations) ?
                         (Indices) annotations.stream().filter(a -> (a instanceof Indices)).findAny().orElse(null) : null;
                 final VersionAttribute versionAttribute = !CollectionUtils.isEmpty(annotations) ?
                         (VersionAttribute) annotations.stream().filter(a -> (a instanceof VersionAttribute)).findAny().orElse(null) : null;
-                final String fieldName = mappedBy != null ? mappedBy.value() : field.getName();
+                final String fieldName = dbAttribute != null ? dbAttribute.value() : field.getName();
                 final List<Index> gsiList;
                 final String fieldNameVal;
                 final Class<?> fieldClass = field.getType();
@@ -163,71 +197,98 @@ final class MapperUtils {
 
                 if (primaryKey != null) {
                     primaryKeyMapping.put(primaryKey.type(), Tuple.of(fieldName, field));
+                } else if(hashKey != null) {
+                    primaryKeyMapping.put(KeyType.HASH_KEY, Tuple.of(fieldName, field));
+                } else if(rangeKey != null) {
+                    primaryKeyMapping.put(KeyType.RANGE_KEY, Tuple.of(fieldName, field));
                 }
 
-                gsiList.forEach(gsi -> {
-                    if (gsi != null) {
-                        final GSI.Builder gsiBuilder = globalSecondaryIndexMap.computeIfAbsent(gsi.name(), s -> GSI.builder(gsi.name())
-                                .projectionType(gsi.projectionType()));
-                        final Tuple<String, Field> keyTuple = Tuple.of(fieldName, field);
+                gsiList.stream().filter(Objects::nonNull).forEach(gsi -> setGsiBuilder(globalSecondaryIndexMap, field, fieldName, gsi));
 
-                        switch (gsi.type()) {
-                            case HASH_KEY:
-                                gsiBuilder.hashKeyTuple(keyTuple);
-                                break;
-                            case RANGE_KEY:
-                                gsiBuilder.rangeKeyTuple(keyTuple);
-                                break;
-                            default:
-                                throw new DbException("Unrecognized key type");
-                        }
-                    }
-                });
-                fieldNameVal = getFieldName(mappedBy, dateCreated, dateUpdated, field, builder);
+                fieldNameVal = getFieldName(dbAttribute, dateCreated, dateUpdated, field, builder);
 
-                mappedFields.put(fieldNameVal, Tuple.of(field, mappedBy));
+                mappedFields.put(fieldNameVal, Tuple.of(field, dbAttribute));
 
                 if (versionAttribute != null) {
-                    versionAttMap.put(fieldNameVal, Tuple.of(field, mappedBy));
+                    versionAttMap.put(fieldNameVal, Tuple.of(field, dbAttribute));
                 }
 
-            } else {
-                throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "A field can only have one of the following annotation: [MappedBy, DateCreated, DateUpdated]");
             }
         }
     }
 
-    static <T> Stream<Tuple4<String, Object, Field, MappedBy>> getMappedValues(final T input, final Class<T> parameterClass) {
+    private static void setGsiBuilder(ConcurrentHashMap<String, GSI.Builder> globalSecondaryIndexMap, Field field, String fieldName, Index gsi) {
+        final GSI.Builder gsiBuilder = globalSecondaryIndexMap.computeIfAbsent(gsi.name(), s -> GSI.builder(gsi.name())
+                .projectionType(gsi.projectionType()));
+        final Tuple<String, Field> keyTuple = Tuple.of(fieldName, field);
+
+        switch (gsi.type()) {
+            case HASH_KEY:
+                gsiBuilder.hashKeyTuple(keyTuple);
+                break;
+            case RANGE_KEY:
+                gsiBuilder.rangeKeyTuple(keyTuple);
+                break;
+            default:
+                throw new DbException("Unrecognized key type");
+        }
+    }
+
+    static <T> Stream<Tuple4<String, Object, Field, DbAttribute>> getMappedValues(final T input, final Class<T> parameterClass) {
         final DataMapper<T> dataMapper = DataMapperWrapper.getDataMapper(parameterClass);
 
         return dataMapper.getMappedValues(input);
     }
 
-    private static <T> String getFieldName(final MappedBy mappedBy, final DateCreated dateCreated, final DateUpdated dateUpdated, final Field field, final AttributeMapper.Builder<T> builder) {
+    private static <T> String getFieldName(final DbAttribute dbAttribute,
+                                           final DateCreated dateCreated,
+                                           final DateUpdated dateUpdated,
+                                           final Field field,
+                                           final AttributeMapper.Builder<T> builder) {
         final String fieldName;
 
-        if (mappedBy != null) {
-            fieldName = mappedBy.value();
-        } else if (dateCreated != null) {
-            fieldName = dateCreated.value();
-            builder.dateCreatedField(Tuple.of(dateCreated.value(), field));
-        } else if (dateUpdated != null) {
-            fieldName = dateUpdated.value();
-            builder.dateUpdatedField(Tuple.of(dateUpdated.value(), field));
+        if (dbAttribute != null && !StringUtils.isEmpty(dbAttribute.value())) {
+            fieldName = dbAttribute.value().trim();
+        } else if (dbAttribute != null && StringUtils.isEmpty(dbAttribute.value())) {
+            fieldName = field.getName();
         } else {
             fieldName = field.getName();
+        }
+
+        if(dateCreated != null) {
+            builder.dateCreatedField(Tuple.of(fieldName, field));
+        } else if (dateUpdated != null) {
+            builder.dateUpdatedField(Tuple.of(fieldName, field));
         }
 
         return fieldName;
     }
 
+
     private static boolean isAnnotatedCorrectly(final List<Annotation> annotations) {
         final List<? extends Annotation> annotationList = CollectionUtils.isEmpty(annotations) ?
-                annotations.stream().filter(a -> (a instanceof MappedBy
-                        || a instanceof DateCreated
-                        || a instanceof DateUpdated)).collect(Collectors.toList()) : Collections.emptyList();
+                annotations.stream().filter(a -> (a instanceof DateCreated || a instanceof DateUpdated)).collect(Collectors.toList()) : Collections.emptyList();
 
-        return CollectionUtils.isEmpty(annotationList) || annotationList.size() == 1;
+        //A field cannot have both DateCreated and DateUpdated annotation
+        if(CollectionUtils.isEmpty(annotationList) || annotationList.size() == 1) {
+            return true;
+        } else {
+            throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "A field can only have one of the following annotation: [DateCreated, DateUpdated]");
+        }
+    }
+
+    private static boolean isValidPrimaryKeyMapping(final List<Annotation> annotations) {
+        final List<? extends Annotation> pk = CollectionUtils.isEmpty(annotations) ?
+                annotations.stream().filter(a -> (a instanceof PK)).collect(Collectors.toList()) : Collections.emptyList();
+        final List<? extends Annotation> keys = CollectionUtils.isEmpty(annotations) ?
+                annotations.stream().filter(a -> (a instanceof HashKey || a instanceof RangeKey)).collect(Collectors.toList()) : Collections.emptyList();
+
+        //A field cannot have both PK and @HashKey/@RangeKey annotation
+        if(CollectionUtils.isEmpty(pk) || CollectionUtils.isEmpty(keys)) {
+            return true;
+        } else {
+            throw new UtilsException(Issue.INCORRECT_MODEL_ANNOTATION, "A field can only have one of the following annotation: [PK, (HashKey or RangeKey)]");
+        }
     }
 
     private static boolean isTransient(final List<Annotation> annotations) {

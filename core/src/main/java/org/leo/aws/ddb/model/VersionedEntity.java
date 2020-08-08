@@ -1,12 +1,12 @@
 package org.leo.aws.ddb.model;
 
 
-import org.leo.aws.ddb.annotations.MappedBy;
+import org.leo.aws.ddb.annotations.DbAttribute;
 import org.leo.aws.ddb.annotations.VersionAttribute;
 
 public class VersionedEntity {
     @VersionAttribute
-    @MappedBy("version")
+    @DbAttribute("version")
     private Integer version;
 
     public Integer getVersion() {

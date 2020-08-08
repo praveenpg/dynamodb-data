@@ -1,7 +1,8 @@
-package org.leo.aws.ddb.autoconfigure;
+package org.leo.aws.ddb.repositories;
 
+import org.leo.aws.ddb.autoconfigure.AwsEnvironmentProperties;
+import org.leo.aws.ddb.autoconfigure.DynamoDbProperties;
 import org.leo.aws.ddb.config.EntityValidationConfig;
-import org.leo.aws.ddb.repositories.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;

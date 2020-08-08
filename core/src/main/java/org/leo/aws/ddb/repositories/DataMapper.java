@@ -1,8 +1,8 @@
 package org.leo.aws.ddb.repositories;
 
 
-import org.leo.aws.ddb.annotations.MappedBy;
-import org.leo.aws.ddb.annotations.PK;
+import org.leo.aws.ddb.annotations.DbAttribute;
+import org.leo.aws.ddb.annotations.KeyType;
 import org.leo.aws.ddb.model.PrimaryKey;
 import org.leo.aws.ddb.utils.DbUtils;
 import org.leo.aws.ddb.utils.model.Tuple;
@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public interface DataMapper<T> {
+interface DataMapper<T> {
     @SuppressWarnings("unused")
     Logger LOGGER = LoggerFactory.getLogger(DataMapper.class);
 
@@ -35,7 +35,7 @@ public interface DataMapper<T> {
         final AttributeMapper<T> fieldMapping = (AttributeMapper<T>) MapperUtils.ATTRIBUTE_MAPPING_MAP.get(getParameterType().getName());
         final Constructor<T> constructor = fieldMapping.getConstructor();
         final T mappedObject = Utils.constructObject(constructor);
-        final Map<String, Tuple<Field, MappedBy>> fieldMap = fieldMapping.getMappedFields();
+        final Map<String, Tuple<Field, DbAttribute>> fieldMap = fieldMapping.getMappedFields();
 
         attributeValues.entrySet().stream()
                 .filter(a -> (fieldMap.get(a.getKey()) != null))
@@ -53,7 +53,7 @@ public interface DataMapper<T> {
     @SuppressWarnings("unchecked")
     default Map<String, AttributeValue> mapToValue(final T input) {
         final AttributeMapper<T> fieldMapping = (AttributeMapper<T>) MapperUtils.ATTRIBUTE_MAPPING_MAP.get(getParameterType().getName());
-        final Map<String, Tuple<Field, MappedBy>> fieldMap = fieldMapping.getMappedFields();
+        final Map<String, Tuple<Field, DbAttribute>> fieldMap = fieldMapping.getMappedFields();
 
         return fieldMapping.getMappedFields().keySet().stream()
                            .map(key -> Tuple.of(key, ReflectionUtils.getField(fieldMap.get(key)._1(), input)))
@@ -63,7 +63,7 @@ public interface DataMapper<T> {
     }
 
     @SuppressWarnings("unchecked")
-    default Tuple<Field, MappedBy> getVersionedAttribute() {
+    default Tuple<Field, DbAttribute> getVersionedAttribute() {
         final AttributeMapper<T> fieldMapping = (AttributeMapper<T>) MapperUtils.ATTRIBUTE_MAPPING_MAP.get(getParameterType().getName());
 
         return fieldMapping.getVersionAttributeField();
@@ -93,9 +93,9 @@ public interface DataMapper<T> {
     @SuppressWarnings("unchecked")
     default PrimaryKey createPKFromItem(final T item) {
         final AttributeMapper<T> fieldMapping = (AttributeMapper<T>) MapperUtils.ATTRIBUTE_MAPPING_MAP.get(getParameterType().getName());
-        final Map<PK.Type, Tuple<String, Field>> pkMap = fieldMapping.getPrimaryKeyMapping();
-        final Tuple<String, Field> hashKeyTuple = pkMap.get(PK.Type.HASH_KEY);
-        final Tuple<String, Field> rangeKeyTuple = pkMap.get(PK.Type.RANGE_KEY);
+        final Map<KeyType, Tuple<String, Field>> pkMap = fieldMapping.getPrimaryKeyMapping();
+        final Tuple<String, Field> hashKeyTuple = pkMap.get(KeyType.HASH_KEY);
+        final Tuple<String, Field> rangeKeyTuple = pkMap.get(KeyType.RANGE_KEY);
 
         return PrimaryKey.builder()
                 .hashKeyValue(String.valueOf(DbUtils.serializeValue(hashKeyTuple._2(), ReflectionUtils.getField(hashKeyTuple._2(), item))))
@@ -128,7 +128,7 @@ public interface DataMapper<T> {
      * @param input Entity object
      * @return Field values along with the attribute name in the DDB table to which it is mapped to.
      */
-    default Stream<Tuple4<String,Object, Field, MappedBy>> getMappedValues(final T input) {
+    default Stream<Tuple4<String,Object, Field, DbAttribute>> getMappedValues(final T input) {
         final String parameterType = getParameterType().getName();
         return MapperUtils.getMappedValues(input, parameterType);
     }
@@ -137,7 +137,7 @@ public interface DataMapper<T> {
      *
      * @return Primary key mapping
      */
-    default Map<PK.Type, Tuple<String, Field>> getPKMapping() {
+    default Map<KeyType, Tuple<String, Field>> getPKMapping() {
         return MapperUtils.ATTRIBUTE_MAPPING_MAP.get(getParameterType().getName()).getPrimaryKeyMapping();
     }
 }

@@ -1,8 +1,8 @@
 package org.leo.aws.ddb.repositories;
 
 
-import org.leo.aws.ddb.annotations.MappedBy;
-import org.leo.aws.ddb.annotations.PK;
+import org.leo.aws.ddb.annotations.DbAttribute;
+import org.leo.aws.ddb.annotations.KeyType;
 import org.leo.aws.ddb.exceptions.DbException;
 import org.leo.aws.ddb.model.Page;
 import org.leo.aws.ddb.model.PatchUpdate;
@@ -39,20 +39,20 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return Range Key name
      */
     default String getRangeKeyName() {
-        return DataMapperWrapper.getDataMapper(getParameterType()).getPKMapping().get(PK.Type.RANGE_KEY)._1();
+        return DataMapperWrapper.getDataMapper(getParameterType()).getPKMapping().get(KeyType.RANGE_KEY)._1();
     }
 
     /**
      * @return Entity class
      */
     default Class<ENTITY_TYPE> getParameterType() {
-        return RepositoryUtils.getRepoParameterType(this);
+        return RepositoryQueryUtils.getRepoParameterType(this);
     }
 
     /**
      * @return Primary Key Mapping. This is a combination of the hash key and range key
      */
-    default Map<PK.Type, Tuple<String, Field>> getPkMapping() {
+    default Map<KeyType, Tuple<String, Field>> getPkMapping() {
         return DataMapperWrapper.getDataMapper(getParameterType()).getPKMapping();
     }
 
@@ -72,7 +72,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
                     type.getName(), ApplicationContextUtils.getEnvironment().getProperty("org.leo.aws.ddb.entityBasePackage")));
         }
 
-        return dataMapper.getPKMapping().get(PK.Type.HASH_KEY)._1();
+        return dataMapper.getPKMapping().get(KeyType.HASH_KEY)._1();
     }
 
 
@@ -87,7 +87,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
         final Class<ENTITY_TYPE> paramType = getParameterType();
         final DataMapper<ENTITY_TYPE> dataMapper = DataMapperWrapper.getDataMapper(paramType);
         final PrimaryKey primaryKey = dataMapper.createPKFromItem(item);
-        final Stream<Tuple4<String, Object, Field, MappedBy>> fieldMappings = dataMapper.getMappedValues(item)
+        final Stream<Tuple4<String, Object, Field, DbAttribute>> fieldMappings = dataMapper.getMappedValues(item)
                 .filter(a -> !a._1().equals(primaryKey.getHashKeyName())).filter(a -> !a._1().equals(primaryKey.getRangeKeyName()));
 
         return includeNullValues ? fieldMappings.collect(Collectors.toMap(Tuple4::_1, Tuple4::_2)) :
@@ -271,7 +271,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
                                                                       @Nullable String indexName,
                                                                       @Nullable Expr expr) {
 
-        return RepositoryUtils.processRepositoryResponseForMultipleRecords(RepositoryUtils.findByHashKeyAndRangeKeyStartsWithPagination(hashKey,
+        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(RepositoryQueryUtils.findByHashKeyAndRangeKeyStartsWithPagination(hashKey,
                 hashKeyValueObj,
                 rangeKey,
                 rangeKeyValue,
@@ -330,7 +330,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
                                                     final Object rangeKeyValue,
                                                     @Nullable final Expr expr) {
 
-        return RepositoryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.findByGlobalSecondaryIndex(indexName,
+        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.findByGlobalSecondaryIndex(indexName,
                 hashKeyValueObj,
                 rangeKeyValue,
                 this::getPrimaryKey,
@@ -365,7 +365,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return List of all records
      */
     default MULTIPLE_RECORD_TYPE findAll(int limit) {
-        return RepositoryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.findAll(limit, this::getParameterType), this);
+        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.findAll(limit, this::getParameterType), this);
     }
 
     /**
@@ -382,7 +382,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return All records that satisfies the filter criteria
      */
     default MULTIPLE_RECORD_TYPE findAll(@Nullable final Expr expr, final int limit) {
-        return RepositoryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.findAll(expr, limit, this::getParameterType), this);
+        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.findAll(expr, limit, this::getParameterType), this);
     }
 
     /**
@@ -392,7 +392,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return A mono representing a record which matches the primary key passed.
      */
     default SINGLE_RECORD_TYPE findByPrimaryKey(@NonNull final PrimaryKey primaryKey) {
-        return RepositoryUtils.processRepositoryResponseForSingleRecord(BaseRepositoryUtils.findByPrimaryKey(primaryKey, this::getParameterType), this);
+        return RepositoryQueryUtils.processRepositoryResponseForSingleRecord(BaseRepositoryUtils.findByPrimaryKey(primaryKey, this::getParameterType), this);
     }
 
     /**
@@ -409,7 +409,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return Records matching above criteria
      */
     default MULTIPLE_RECORD_TYPE findByPrimaryKeys(@NonNull final List<PrimaryKey> primaryKeys) {
-        return RepositoryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.findByPrimaryKeys(primaryKeys, this::getParameterType), this);
+        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.findByPrimaryKeys(primaryKeys, this::getParameterType), this);
     }
 
     /**
@@ -432,7 +432,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return Record being saved
      */
     default SINGLE_RECORD_TYPE putItem(@NonNull final ENTITY_TYPE item, final Action2<ENTITY_TYPE, Map<String, AttributeValue>> ttlAction) {
-        return RepositoryUtils.processRepositoryResponseForSingleRecord(Mono.fromFuture(BaseRepositoryUtils
+        return RepositoryQueryUtils.processRepositoryResponseForSingleRecord(Mono.fromFuture(BaseRepositoryUtils
                 .saveItem(item, true,
                         ttlAction,
                         DataMapperWrapper.getDataMapper(getParameterType()))), this);
@@ -445,7 +445,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return A future
      */
     default MULTIPLE_RECORD_TYPE putItem(@NonNull final List<ENTITY_TYPE> items) {
-        return RepositoryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.batchWriteRequest(dataMapper -> items.stream().map(item -> WriteRequest.builder()
+        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.batchWriteRequest(dataMapper -> items.stream().map(item -> WriteRequest.builder()
                 .putRequest(PutRequest.builder()
                         .item(dataMapper.mapToValue(item))
                         .build())
@@ -459,7 +459,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return updated item
      */
     default SINGLE_RECORD_TYPE updateItem(@NonNull final ENTITY_TYPE item) {
-        return RepositoryUtils.processRepositoryResponseForSingleRecord(BaseRepositoryUtils.updateItem(item, this::getPrimaryKey, this::getParameterType), this);
+        return RepositoryQueryUtils.processRepositoryResponseForSingleRecord(BaseRepositoryUtils.updateItem(item, this::getPrimaryKey, this::getParameterType), this);
     }
 
     /**
@@ -468,7 +468,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return A future representing the execution of the method
      */
     default SINGLE_RECORD_TYPE updateItem(@NonNull final PrimaryKey primaryKey, @NonNull final Map<String, Object> updatedValues) {
-        return RepositoryUtils.processRepositoryResponseForSingleRecord(BaseRepositoryUtils.updateItem(primaryKey, updatedValues, pk -> BaseRepositoryUtils.findByPrimaryKey(pk, this::getParameterType), this::getParameterType), this);
+        return RepositoryQueryUtils.processRepositoryResponseForSingleRecord(BaseRepositoryUtils.updateItem(primaryKey, updatedValues, pk -> BaseRepositoryUtils.findByPrimaryKey(pk, this::getParameterType), this::getParameterType), this);
     }
 
     /**
@@ -488,7 +488,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return A future representing the execution of the method
      */
     default MULTIPLE_RECORD_TYPE updateItem(@NonNull final List<UpdateItem> updateItems) {
-        return RepositoryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils
+        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils
                 .updateItem(updateItems, this::getParameterType, pks -> BaseRepositoryUtils.findByPrimaryKeys(pks, this::getParameterType)), this);
     }
 
@@ -513,7 +513,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return A future
      */
     default MULTIPLE_RECORD_TYPE deleteAllItems(@NonNull final List<ENTITY_TYPE> items) {
-        return RepositoryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.batchWriteRequest(dataMapper -> items.stream().map(item -> WriteRequest.builder()
+        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.batchWriteRequest(dataMapper -> items.stream().map(item -> WriteRequest.builder()
                 .deleteRequest(DeleteRequest.builder()
                         .key(dataMapper.getPrimaryKey(dataMapper.createPKFromItem(item)))
                         .build())
@@ -528,7 +528,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return A future
      */
     default MULTIPLE_RECORD_TYPE batchWrite(final List<ENTITY_TYPE> putItems, final List<ENTITY_TYPE> deleteItems) {
-        return RepositoryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.batchWrite(putItems, deleteItems, this::getParameterType), this);
+        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.batchWrite(putItems, deleteItems, this::getParameterType), this);
     }
 
 
@@ -540,7 +540,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return A future
      */
     default SINGLE_RECORD_TYPE deleteItem(@NonNull final ENTITY_TYPE item) {
-        return RepositoryUtils.processRepositoryResponseForSingleRecord(BaseRepositoryUtils.deleteItem(item, this::getParameterType), this);
+        return RepositoryQueryUtils.processRepositoryResponseForSingleRecord(BaseRepositoryUtils.deleteItem(item, this::getParameterType), this);
     }
 
     /**
@@ -571,6 +571,6 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return Item being saved
      */
     default SINGLE_RECORD_TYPE saveItem(final ENTITY_TYPE item, final Action2<ENTITY_TYPE, Map<String, AttributeValue>> ttlAction) {
-        return RepositoryUtils.processRepositoryResponseForSingleRecord(Mono.fromFuture(BaseRepositoryUtils.saveItem(item, false, ttlAction, DataMapperWrapper.getDataMapper(getParameterType()))), this);
+        return RepositoryQueryUtils.processRepositoryResponseForSingleRecord(Mono.fromFuture(BaseRepositoryUtils.saveItem(item, false, ttlAction, DataMapperWrapper.getDataMapper(getParameterType()))), this);
     }
 }

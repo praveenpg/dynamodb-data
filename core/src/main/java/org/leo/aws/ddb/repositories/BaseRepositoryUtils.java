@@ -1,7 +1,7 @@
 package org.leo.aws.ddb.repositories;
 
 import com.google.common.collect.ImmutableMap;
-import org.leo.aws.ddb.annotations.MappedBy;
+import org.leo.aws.ddb.annotations.DbAttribute;
 import org.leo.aws.ddb.annotations.ProjectionType;
 import org.leo.aws.ddb.exceptions.DbException;
 import org.leo.aws.ddb.exceptions.OptimisticLockFailureException;
@@ -52,7 +52,7 @@ class BaseRepositoryUtils {
         }
     }
 
-    static <T> Integer setVersion(final T item, final Tuple<Field, MappedBy> versionedAttribute, final UpdateItemRequest.Builder updateItemRequestBuilder) {
+    static <T> Integer setVersion(final T item, final Tuple<Field, DbAttribute> versionedAttribute, final UpdateItemRequest.Builder updateItemRequestBuilder) {
         final Integer version;
         if (versionedAttribute != null) {
             final Number versionNum = (Number) ReflectionUtils.getField(versionedAttribute._1(), item);
@@ -99,9 +99,9 @@ class BaseRepositoryUtils {
                                   final DataMapper<T> dataMapper,
                                   final T item) {
 
-        final Tuple<Field, MappedBy> versionedAttribute = dataMapper.getVersionedAttribute();
+        final Tuple<Field, DbAttribute> versionedAttribute = dataMapper.getVersionedAttribute();
         final UpdateItemRequest.Builder updateItemRequestBuilder = UpdateItemRequest.builder();
-        final Map<String, Tuple3<String, Field, MappedBy>> mappedFields = MapperUtils.getMappedValues(parameterType.getName())
+        final Map<String, Tuple3<String, Field, DbAttribute>> mappedFields = MapperUtils.getMappedValues(parameterType.getName())
                 .collect(Collectors.toMap(Tuple3::_1, b -> b));
         final Stream<Tuple<String, AttributeValueUpdate>> mappedValues = updatedValues.entrySet().stream()
                 .filter(entry -> !entry.getKey().equals(primaryKey.getHashKeyName()))
@@ -161,7 +161,7 @@ class BaseRepositoryUtils {
 
             hashKeyValue = (String) hashKeyValueObj;
 
-            queryResponseTuple = RepositoryUtils.getDataFromIndex(indexName, hashKeyValue, Optional.ofNullable(rangeKeyValue), dataClass, filterExpression);
+            queryResponseTuple = RepositoryQueryUtils.getDataFromIndex(indexName, hashKeyValue, Optional.ofNullable(rangeKeyValue), dataClass, filterExpression);
 
             returnedDataFromDb = Flux
                     .from(queryResponseTuple._2())
@@ -250,7 +250,7 @@ class BaseRepositoryUtils {
         final Map<String, AttributeValue> attributeValues;
         final PutItemRequest putItemRequest;
         final PutItemRequest.Builder builder;
-        final Tuple<Field, MappedBy> versionedAttribute = dataMapper.getVersionedAttribute();
+        final Tuple<Field, DbAttribute> versionedAttribute = dataMapper.getVersionedAttribute();
 
         builder = PutItemRequest.builder()
                 .tableName(dataMapper.tableName());
@@ -312,7 +312,7 @@ class BaseRepositoryUtils {
         final Class<T> dataClass = dataClassFunc.get();
         final DataMapper<T> dataMapper = DataMapperWrapper.getDataMapper(dataClass);
         final Stream<Tuple<String, AttributeValueUpdate>> mappedValues;
-        final Tuple<Field, MappedBy> versionedAttribute = dataMapper.getVersionedAttribute();
+        final Tuple<Field, DbAttribute> versionedAttribute = dataMapper.getVersionedAttribute();
         final UpdateItemRequest.Builder updateItemRequestBuilder = UpdateItemRequest.builder();
 
         BaseRepositoryUtils.setVersion(item, versionedAttribute, updateItemRequestBuilder);

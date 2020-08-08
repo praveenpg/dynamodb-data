@@ -2,13 +2,15 @@ package org.leo.aws.ddb.annotations;
 
 import java.lang.annotation.*;
 
+
+/**
+ * Please use {@link HashKey} and {@link RangeKey}
+ */
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
+@Deprecated
 public @interface PK {
-    Type type() default Type.HASH_KEY;
+    KeyType type() default KeyType.HASH_KEY;
 
-    enum Type {
-        HASH_KEY, RANGE_KEY
-    }
 }
