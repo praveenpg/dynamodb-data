@@ -227,7 +227,7 @@ final class MapperUtils {
     }
 
     static <T> Stream<Tuple4<String, Object, Field, DbAttribute>> getMappedValues(final T input, final Class<T> parameterClass) {
-        final DataMapper<T> dataMapper = DataMapperWrapper.getDataMapper(parameterClass);
+        final DataMapper<T> dataMapper = DataMapperUtils.getDataMapper(parameterClass);
 
         return dataMapper.getMappedValues(input);
     }

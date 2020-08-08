@@ -39,7 +39,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return Range Key name
      */
     default String getRangeKeyName() {
-        return DataMapperWrapper.getDataMapper(getParameterType()).getPKMapping().get(KeyType.RANGE_KEY)._1();
+        return DataMapperUtils.getDataMapper(getParameterType()).getPKMapping().get(KeyType.RANGE_KEY)._1();
     }
 
     /**
@@ -53,11 +53,11 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return Primary Key Mapping. This is a combination of the hash key and range key
      */
     default Map<KeyType, Tuple<String, Field>> getPkMapping() {
-        return DataMapperWrapper.getDataMapper(getParameterType()).getPKMapping();
+        return DataMapperUtils.getDataMapper(getParameterType()).getPKMapping();
     }
 
     default PrimaryKey getPrimaryKey(final ENTITY_TYPE item) {
-        return DataMapperWrapper.getDataMapper(getParameterType()).createPKFromItem(item);
+        return DataMapperUtils.getDataMapper(getParameterType()).createPKFromItem(item);
     }
 
     /**
@@ -65,7 +65,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      */
     default String getHashKeyName() {
         final Class<ENTITY_TYPE> type = getParameterType();
-        final DataMapper<ENTITY_TYPE> dataMapper = DataMapperWrapper.getDataMapper(getParameterType());
+        final DataMapper<ENTITY_TYPE> dataMapper = DataMapperUtils.getDataMapper(getParameterType());
 
         if (dataMapper == null) {
             throw new DbException(MessageFormat.format("Could not find any entity of type [{0}] in the provided entityBasePackage [org.leo.aws.ddb.entityBasePackage: {1}]",
@@ -85,7 +85,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      */
     default Map<String, ?> getFieldMappings(final ENTITY_TYPE item, final boolean includeNullValues) {
         final Class<ENTITY_TYPE> paramType = getParameterType();
-        final DataMapper<ENTITY_TYPE> dataMapper = DataMapperWrapper.getDataMapper(paramType);
+        final DataMapper<ENTITY_TYPE> dataMapper = DataMapperUtils.getDataMapper(paramType);
         final PrimaryKey primaryKey = dataMapper.createPKFromItem(item);
         final Stream<Tuple4<String, Object, Field, DbAttribute>> fieldMappings = dataMapper.getMappedValues(item)
                 .filter(a -> !a._1().equals(primaryKey.getHashKeyName())).filter(a -> !a._1().equals(primaryKey.getRangeKeyName()));
@@ -419,7 +419,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return A future
      */
     default SINGLE_RECORD_TYPE putItem(@NonNull final ENTITY_TYPE item) {
-        final DataMapper<ENTITY_TYPE> dataMapper = DataMapperWrapper.getDataMapper(getParameterType());
+        final DataMapper<ENTITY_TYPE> dataMapper = DataMapperUtils.getDataMapper(getParameterType());
         final Action2<ENTITY_TYPE, Map<String, AttributeValue>> ttlAction = (a, b) -> {};
 
         return putItem(item, ttlAction);
@@ -435,7 +435,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
         return RepositoryQueryUtils.processRepositoryResponseForSingleRecord(Mono.fromFuture(BaseRepositoryUtils
                 .saveItem(item, true,
                         ttlAction,
-                        DataMapperWrapper.getDataMapper(getParameterType()))), this);
+                        DataMapperUtils.getDataMapper(getParameterType()))), this);
     }
 
     /**
@@ -449,7 +449,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
                 .putRequest(PutRequest.builder()
                         .item(dataMapper.mapToValue(item))
                         .build())
-                .build()), () -> items, DataMapperWrapper.getDataMapper(getParameterType())), this);
+                .build()), () -> items, DataMapperUtils.getDataMapper(getParameterType())), this);
     }
 
     /**
@@ -517,7 +517,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
                 .deleteRequest(DeleteRequest.builder()
                         .key(dataMapper.getPrimaryKey(dataMapper.createPKFromItem(item)))
                         .build())
-                .build()), () -> items, DataMapperWrapper.getDataMapper(getParameterType())), this);
+                .build()), () -> items, DataMapperUtils.getDataMapper(getParameterType())), this);
     }
 
     /**
@@ -560,7 +560,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return A future
      */
     default SINGLE_RECORD_TYPE saveItem(@NonNull final ENTITY_TYPE item) {
-        final DataMapper<ENTITY_TYPE> dataMapper = DataMapperWrapper.getDataMapper(getParameterType());
+        final DataMapper<ENTITY_TYPE> dataMapper = DataMapperUtils.getDataMapper(getParameterType());
 
         return saveItem(item, (entity, attributeValueMap) -> {});
     }
@@ -571,6 +571,6 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return Item being saved
      */
     default SINGLE_RECORD_TYPE saveItem(final ENTITY_TYPE item, final Action2<ENTITY_TYPE, Map<String, AttributeValue>> ttlAction) {
-        return RepositoryQueryUtils.processRepositoryResponseForSingleRecord(Mono.fromFuture(BaseRepositoryUtils.saveItem(item, false, ttlAction, DataMapperWrapper.getDataMapper(getParameterType()))), this);
+        return RepositoryQueryUtils.processRepositoryResponseForSingleRecord(Mono.fromFuture(BaseRepositoryUtils.saveItem(item, false, ttlAction, DataMapperUtils.getDataMapper(getParameterType()))), this);
     }
 }

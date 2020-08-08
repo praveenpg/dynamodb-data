@@ -37,7 +37,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class BaseRepositoryUtils {
+final class BaseRepositoryUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseRepositoryUtils.class);
 
 
@@ -131,7 +131,7 @@ class BaseRepositoryUtils {
             mappedUpdateValues = mappedUpdateValuesTmp;
         }
 
-        return Mono.fromFuture(DataMapperWrapper.getDynamoDbAsyncClient().updateItem(updateItemRequestBuilder
+        return Mono.fromFuture(DataMapperUtils.getDynamoDbAsyncClient().updateItem(updateItemRequestBuilder
                 .tableName(dataMapper.tableName())
                 .key(dataMapper.getPrimaryKey(primaryKey))
                 .attributeUpdates(mappedUpdateValues)
@@ -166,7 +166,7 @@ class BaseRepositoryUtils {
             returnedDataFromDb = Flux
                     .from(queryResponseTuple._2())
                     .flatMapIterable(QueryResponse::items)
-                    .map(a -> DataMapperWrapper.getDataMapper(dataClass).mapFromValue(a));
+                    .map(a -> DataMapperUtils.getDataMapper(dataClass).mapFromValue(a));
 
             if (queryResponseTuple._1() == ProjectionType.ALL) {
                 returnData = returnedDataFromDb;
@@ -188,7 +188,7 @@ class BaseRepositoryUtils {
     }
 
     static <T> Flux<T> findAll(final Expr expr, int pageSize, final Supplier<Class<T>> dataClassFunc) {
-        final DataMapper<T> dataMapper = DataMapperWrapper.getDataMapper(dataClassFunc.get());
+        final DataMapper<T> dataMapper = DataMapperUtils.getDataMapper(dataClassFunc.get());
         final ScanRequest.Builder scanRequestBuilder = ScanRequest
                 .builder()
                 .tableName(dataMapper.tableName())
@@ -210,7 +210,7 @@ class BaseRepositoryUtils {
             }
         }
 
-        scanPublisher = DataMapperWrapper.getDynamoDbAsyncClient().scanPaginator(scanRequestBuilder.build());
+        scanPublisher = DataMapperUtils.getDynamoDbAsyncClient().scanPaginator(scanRequestBuilder.build());
 
         return Flux.from(scanPublisher)
                 .flatMapIterable(ScanResponse::items)
@@ -218,17 +218,17 @@ class BaseRepositoryUtils {
     }
 
     static <T> Mono<T> findByPrimaryKey(final PrimaryKey primaryKey, final Supplier<Class<T>> dataClassFunc) {
-        final DataMapper<T> dataMapper = DataMapperWrapper.getDataMapper(dataClassFunc.get());
+        final DataMapper<T> dataMapper = DataMapperUtils.getDataMapper(dataClassFunc.get());
         final GetItemRequest getItemRequest = GetItemRequest.builder()
                 .key(dataMapper.getPrimaryKey(primaryKey))
                 .tableName(dataMapper.tableName()).build();
 
-        return Mono.fromCompletionStage(DataMapperWrapper.getDynamoDbAsyncClient().getItem(getItemRequest))
+        return Mono.fromCompletionStage(DataMapperUtils.getDynamoDbAsyncClient().getItem(getItemRequest))
                 .flatMap(resp -> resp.item().isEmpty() ? Mono.empty() : Mono.just(dataMapper.mapFromValue(resp.item())));
     }
 
     static <T> Flux<T> findByPrimaryKeys(final List<PrimaryKey> primaryKeys, final Supplier<Class<T>> dataClassFunc) {
-        final DataMapper<T> dataMapper = DataMapperWrapper.getDataMapper(dataClassFunc.get());
+        final DataMapper<T> dataMapper = DataMapperUtils.getDataMapper(dataClassFunc.get());
         final KeysAndAttributes attributes = KeysAndAttributes.builder().keys(primaryKeys.stream()
                 .map(dataMapper::getPrimaryKey)
                 .collect(Collectors.toList())).build();
@@ -239,7 +239,7 @@ class BaseRepositoryUtils {
         request = BatchGetItemRequest.builder().requestItems(andAttributesMap).build();
 
         return Flux
-                .from(DataMapperWrapper.getDynamoDbAsyncClient().batchGetItemPaginator(request))
+                .from(DataMapperUtils.getDynamoDbAsyncClient().batchGetItemPaginator(request))
                 .flatMapIterable(resp -> resp.responses().get(dataMapper.tableName()))
                 .map(dataMapper::mapFromValue);
     }
@@ -291,7 +291,7 @@ class BaseRepositoryUtils {
 
         putItemRequest = builder.build();
 
-        return DataMapperWrapper.getDynamoDbAsyncClient().putItem(putItemRequest).thenApplyAsync(putItemResponse -> item)
+        return DataMapperUtils.getDynamoDbAsyncClient().putItem(putItemRequest).thenApplyAsync(putItemResponse -> item)
                 .exceptionally(e -> handleCreateItemException(primaryKey, e, tableName));
     }
 
@@ -310,7 +310,7 @@ class BaseRepositoryUtils {
     static <T> Mono<T> updateItem(final T item, final Function<T, PrimaryKey> primaryKeyFunc, final Supplier<Class<T>> dataClassFunc) {
         final PrimaryKey primaryKey = primaryKeyFunc.apply(item);
         final Class<T> dataClass = dataClassFunc.get();
-        final DataMapper<T> dataMapper = DataMapperWrapper.getDataMapper(dataClass);
+        final DataMapper<T> dataMapper = DataMapperUtils.getDataMapper(dataClass);
         final Stream<Tuple<String, AttributeValueUpdate>> mappedValues;
         final Tuple<Field, DbAttribute> versionedAttribute = dataMapper.getVersionedAttribute();
         final UpdateItemRequest.Builder updateItemRequestBuilder = UpdateItemRequest.builder();
@@ -322,7 +322,7 @@ class BaseRepositoryUtils {
                 .filter(a -> a._1() != null)
                 .map(a -> Tuple.of(a._1(), DbUtils.modelToAttributeUpdateValue(a._3(), a._2()).call(AttributeValueUpdate.builder()).build()));
 
-        return Mono.fromFuture(DataMapperWrapper
+        return Mono.fromFuture(DataMapperUtils
                 .getDynamoDbAsyncClient()
                 .updateItem(updateItemRequestBuilder
                         .tableName(dataMapper.tableName())
@@ -341,14 +341,14 @@ class BaseRepositoryUtils {
 
         final Mono<T> itemMono = findByPrimaryFunc.apply(primaryKey);
         final Class<T> parameterType = dataClassFunc.get();
-        final DataMapper<T> dataMapper = DataMapperWrapper.getDataMapper(parameterType);
+        final DataMapper<T> dataMapper = DataMapperUtils.getDataMapper(parameterType);
 
         return itemMono.flatMap(item -> updateItem(primaryKey, updatedValues, parameterType, dataMapper, item));
     }
 
     static <T> Flux<T> updateItem(final List<UpdateItem> updateItems, final Supplier<Class<T>> paramTypeFunc, final Function<List<PrimaryKey>, Flux<T>> findByPrimaryKeysFunc) {
         final Class<T> parameterType = paramTypeFunc.get();
-        final DataMapper<T> dataMapper = DataMapperWrapper.getDataMapper(parameterType);
+        final DataMapper<T> dataMapper = DataMapperUtils.getDataMapper(parameterType);
         final Flux<T> items = findByPrimaryKeysFunc.apply(updateItems.stream().map(UpdateItem::getPrimaryKey).collect(Collectors.toList()));
         final Map<PrimaryKey, UpdateItem> updateItemMap = updateItems.stream().collect(Collectors.toMap(UpdateItem::getPrimaryKey, b -> b));
 
@@ -369,7 +369,7 @@ class BaseRepositoryUtils {
                         .build())
                 .build());
         final Func1<DataMapper<T>, Stream<WriteRequest>> dbRequestFunc = dataMapper -> Stream.concat(putFunc.call(dataMapper), deleteFunc.call(dataMapper));
-        final DataMapper<T> dataMapper = DataMapperWrapper.getDataMapper(paramTypeFunc.get());
+        final DataMapper<T> dataMapper = DataMapperUtils.getDataMapper(paramTypeFunc.get());
 
         return Mono.fromFuture(processBatchWriteRequest(() -> putItems, ImmutableMap.of(dataMapper.tableName(), dbRequestFunc.call(dataMapper).collect(Collectors.toList())))).flatMapMany(Flux::fromIterable);
     }
@@ -383,7 +383,7 @@ class BaseRepositoryUtils {
                 .returnItemCollectionMetrics(ReturnItemCollectionMetrics.SIZE)
                 .requestItems(requestItems).build();
 
-        response = DataMapperWrapper.getDynamoDbAsyncClient().batchWriteItem(batchWriteItemRequest);
+        response = DataMapperUtils.getDynamoDbAsyncClient().batchWriteItem(batchWriteItemRequest);
 
         return response.thenApplyAsync(res -> {
             final boolean hasUnProcessed = res.hasUnprocessedItems();
@@ -394,12 +394,12 @@ class BaseRepositoryUtils {
     }
 
     static <T> Mono<T> deleteItem(final T item, final Supplier<Class<T>> paramTypeFunc) {
-        final DataMapper<T> dataMapper = DataMapperWrapper.getDataMapper(paramTypeFunc.get());
+        final DataMapper<T> dataMapper = DataMapperUtils.getDataMapper(paramTypeFunc.get());
         final PrimaryKey primaryKey = dataMapper.createPKFromItem(item);
         final DeleteItemRequest deleteRequest = DeleteItemRequest.builder()
                 .tableName(dataMapper.tableName())
                 .key(dataMapper.getPrimaryKey(primaryKey)).build();
 
-        return Mono.fromFuture(DataMapperWrapper.getDynamoDbAsyncClient().deleteItem(deleteRequest).thenApplyAsync(deleteItemResponse -> item));
+        return Mono.fromFuture(DataMapperUtils.getDynamoDbAsyncClient().deleteItem(deleteRequest).thenApplyAsync(deleteItemResponse -> item));
     }
 }

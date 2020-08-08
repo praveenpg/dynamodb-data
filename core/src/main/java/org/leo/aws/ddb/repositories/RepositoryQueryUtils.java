@@ -69,7 +69,7 @@ final class RepositoryQueryUtils {
 
             request = builder.build();
 
-            queryPublisher = DataMapperWrapper.getDynamoDbAsyncClient().queryPaginator(request);
+            queryPublisher = DataMapperUtils.getDynamoDbAsyncClient().queryPaginator(request);
 
             return Tuple.of(secondaryIndex.getProjectionType(), queryPublisher);
         }
@@ -125,7 +125,7 @@ final class RepositoryQueryUtils {
             final String hashAlias = "#a";
             final String keyConditionExpression;
             final QueryRequest.Builder builder = QueryRequest.builder();
-            final DataMapper<T> dataMapper = DataMapperWrapper.getDataMapper(dataClass);
+            final DataMapper<T> dataMapper = DataMapperUtils.getDataMapper(dataClass);
 
             if (!StringUtils.isEmpty(rangeKey) && !StringUtils.isEmpty(rangeKeyValue)) {
                 keyConditionExpression = MessageFormat.format("{0} = :{1} and begins_with({2}, :sortKeyVal)", hashAlias, hashKey, rangeKey);
@@ -167,7 +167,7 @@ final class RepositoryQueryUtils {
                     .expressionAttributeValues(attributeValueMap)
                     .build();
 
-            queryResponse = DataMapperWrapper.getDynamoDbAsyncClient().queryPaginator(request);
+            queryResponse = DataMapperUtils.getDynamoDbAsyncClient().queryPaginator(request);
 
             return Flux.from(queryResponse)
                     .flatMapIterable(QueryResponse::items)

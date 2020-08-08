@@ -7,8 +7,8 @@ import java.util.Map;
 
 
 @SuppressWarnings("unchecked")
-final class DataMapperWrapper {
-    private DataMapperWrapper(){}
+final class DataMapperUtils {
+    private DataMapperUtils(){}
 
     static <T> DataMapper<T> getDataMapper(final Class<T> paramType) {
         return (DataMapper<T>) getDataMapperMap().get(paramType);
@@ -19,6 +19,6 @@ final class DataMapperWrapper {
     }
 
     private static Map<Class<?>, ? extends DataMapper<?>> getDataMapperMap() {
-        return (Map<Class<?>, ? extends DataMapper<?>>) ApplicationContextUtils.getBean("dataMapperMap");
+        return ApplicationContextUtils.getBean("dataMapperMap");
     }
 }
