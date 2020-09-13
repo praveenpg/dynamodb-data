@@ -71,7 +71,7 @@ final class BaseRepositoryUtils {
             if (versionFieldType == Integer.class) {
                 ReflectionUtils.setField(versionedAttribute._1(), item, version);
             } else {
-                ReflectionUtils.setField(versionedAttribute._1(), item, new Long(version));
+                ReflectionUtils.setField(versionedAttribute._1(), item, Long.valueOf(version));
             }
         } else {
             version = null;
