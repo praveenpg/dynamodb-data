@@ -10,7 +10,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.Map;
 
-@SuppressWarnings({"unused", "WeakerAccess"})
+@SuppressWarnings({"unused", "WeakerAccess", "RedundantSuppression"})
 final class AttributeMapper<T> {
     private final Class<T> mappedClass;
     private final Map<String, Tuple<Field, DbAttribute>> mappedFields;
