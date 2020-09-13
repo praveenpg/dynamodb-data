@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@SuppressWarnings({"unused", "unchecked", "rawtypes", "CollectionAddAllCanBeReplacedWithConstructor", "Convert2MethodRef"})
+@SuppressWarnings({"unused", "unchecked", "rawtypes", "CollectionAddAllCanBeReplacedWithConstructor", "Convert2MethodRef", "RedundantSuppression"})
 public final class DbUtils {
     private static final TimeZone SERVER_TIME_ZONE = TimeZone.getTimeZone("America/Los_Angeles");
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;

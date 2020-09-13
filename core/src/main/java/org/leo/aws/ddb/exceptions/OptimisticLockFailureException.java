@@ -3,6 +3,7 @@ package org.leo.aws.ddb.exceptions;
 
 import org.leo.aws.ddb.utils.exceptions.Issue;
 
+@SuppressWarnings({"unused", "RedundantSuppression"})
 public class OptimisticLockFailureException extends DbException {
     public OptimisticLockFailureException() {
         super(Issue.OPTIMISTIC_LOCK_ERROR.name());

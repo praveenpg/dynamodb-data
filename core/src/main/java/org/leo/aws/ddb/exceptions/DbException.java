@@ -1,6 +1,6 @@
 package org.leo.aws.ddb.exceptions;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "RedundantSuppression"})
 public class DbException extends RuntimeException {
     public DbException() {
     }

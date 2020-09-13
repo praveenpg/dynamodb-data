@@ -11,6 +11,7 @@ import javax.annotation.PostConstruct;
 import java.util.Map;
 import java.util.Set;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class DataMapperConfigCleanUp {
     private final String dtoBasePackage;
     private final Map<Class, DataMapper> dataMapperMap;

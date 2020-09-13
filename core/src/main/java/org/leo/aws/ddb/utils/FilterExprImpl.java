@@ -9,7 +9,7 @@ import java.lang.reflect.Proxy;
 import java.text.MessageFormat;
 import java.util.Map;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "RedundantSuppression"})
 class FilterExprImpl implements FilterExpr {
     public static FilterExpr getInstance() {
         return new FilterExprImpl();

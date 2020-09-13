@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 interface DataMapper<T> {
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "RedundantSuppression"})
     Logger LOGGER = LoggerFactory.getLogger(DataMapper.class);
 
     /**
@@ -104,7 +104,7 @@ interface DataMapper<T> {
                 .rangeKeyName(rangeKeyTuple._1()).build();
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "RedundantSuppression"})
     default void applyTTLLogic(final T item, final Map<String, AttributeValue> attributeValueMap) {
         throw new UnsupportedOperationException();
     }

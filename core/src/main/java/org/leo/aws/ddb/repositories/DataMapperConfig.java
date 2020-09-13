@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("SpringFacetCodeInspection")
+@SuppressWarnings({"SpringFacetCodeInspection", "rawtypes"})
 @Configuration
 public class DataMapperConfig {
     private final ApplicationContext applicationContext;

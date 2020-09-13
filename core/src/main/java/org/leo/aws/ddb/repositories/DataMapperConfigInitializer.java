@@ -8,6 +8,7 @@ import org.springframework.core.env.Environment;
 
 import java.util.Map;
 
+@SuppressWarnings({"rawtypes", "SpringFacetCodeInspection"})
 @Configuration
 class DataMapperConfigInitializer {
     @Value("${org.leo.aws.ddb.entities.basePackage:org.leo}")
