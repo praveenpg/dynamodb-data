@@ -1,6 +1,6 @@
 package org.leo.aws.ddb.repositories;
 
-import org.leo.aws.ddb.utils.model.ApplicationContextUtils;
+import org.leo.aws.ddb.utils.ApplicationContextUtils;
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 
 import java.util.Map;
@@ -15,10 +15,10 @@ final class DataMapperUtils {
     }
 
     static DynamoDbAsyncClient getDynamoDbAsyncClient() {
-        return ApplicationContextUtils.getBean(DynamoDbAsyncClient.class);
+        return ApplicationContextUtils.getInstance().getBean(DynamoDbAsyncClient.class);
     }
 
     private static Map<Class<?>, ? extends DataMapper<?>> getDataMapperMap() {
-        return ApplicationContextUtils.getBean("dataMapperMap");
+        return ApplicationContextUtils.getInstance().getBean("dataMapperMap");
     }
 }

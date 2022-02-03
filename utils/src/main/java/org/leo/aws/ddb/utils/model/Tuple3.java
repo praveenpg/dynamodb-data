@@ -9,8 +9,8 @@ public final class Tuple3<A, B, C>  implements ITuple {
     private final Tuple<A, B> firstAndSecond;
     private final C third;
 
-    private Tuple3(final A first, final B second, final C third) {
-        this.firstAndSecond = Tuple.of(first, second);
+    Tuple3(final A first, final B second, final C third) {
+        this.firstAndSecond = Tuples.of(first, second);
         this.third = third;
     }
 
@@ -27,7 +27,7 @@ public final class Tuple3<A, B, C>  implements ITuple {
     }
 
     public <D> Tuple4<A, B, C, D> append(final D fourth) {
-        return Tuple4.of(_1(), _2(), _3(), fourth);
+        return Tuples.of(_1(), _2(), _3(), fourth);
     }
 
     public Iterable<?> toIterable() {
@@ -36,10 +36,6 @@ public final class Tuple3<A, B, C>  implements ITuple {
 
     public static <A, B, C> Tuple3<A, B, C> of(final A first, final B second, final C third) {
         return new Tuple3<>(first, second, third);
-    }
-
-    public static <A, B, C> Tuple3<A, B, C> of(Tuple<A, B> tuple, final C third) {
-        return new Tuple3<>(tuple._1(), tuple._2(), third);
     }
 
     @Override

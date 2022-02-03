@@ -9,9 +9,9 @@ public final class Tuple4<A, B, C, D> implements ITuple {
     private final Tuple<A, B> firstAndSecond;
     private final Tuple<C, D> thirdAndFourth;
 
-    private Tuple4(final A first, final B second, final C third, final D fourth) {
-        this.firstAndSecond = Tuple.of(first, second);
-        this.thirdAndFourth = Tuple.of(third, fourth);
+    Tuple4(final A first, final B second, final C third, final D fourth) {
+        this.firstAndSecond = Tuples.of(first, second);
+        this.thirdAndFourth = Tuples.of(third, fourth);
     }
 
     public A _1() {
@@ -31,19 +31,11 @@ public final class Tuple4<A, B, C, D> implements ITuple {
     }
 
     public <E> Tuple5<A, B, C, D, E> append(final E fifth) {
-        return Tuple5.of(_1(), _2(), _3(), _4(), fifth);
+        return Tuples.of(_1(), _2(), _3(), _4(), fifth);
     }
 
     public Iterable<?> toIterable() {
         return Collections.unmodifiableList(Arrays.asList(_1(), _2(), _3(), _4()));
-    }
-
-    public static <A, B, C, D> Tuple4<A, B, C, D> of(final A first, final B second, final C third, final D fourth) {
-        return new Tuple4<>(first, second, third, fourth);
-    }
-
-    public static <A, B, C, D> Tuple4<A, B, C, D> of(Tuple3<A, B, C> tuple, final D fourth) {
-        return new Tuple4<>(tuple._1(), tuple._2(), tuple._3(), fourth);
     }
 
     @Override

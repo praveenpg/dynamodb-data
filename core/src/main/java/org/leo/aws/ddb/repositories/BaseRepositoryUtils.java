@@ -12,6 +12,7 @@ import org.leo.aws.ddb.utils.Expr;
 import org.leo.aws.ddb.utils.exceptions.Issue;
 import org.leo.aws.ddb.utils.model.Tuple;
 import org.leo.aws.ddb.utils.model.Tuple3;
+import org.leo.aws.ddb.utils.model.Tuples;
 import org.leo.aws.ddb.utils.model.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,9 +114,9 @@ final class BaseRepositoryUtils {
                 })
                 .map(a -> {
                     if (mappedFields.get(a.getKey()) != null) {
-                        return Tuple.of(a.getKey(), DbUtils.modelToAttributeUpdateValue(mappedFields.get(a.getKey())._2(), a.getValue()).call(AttributeValueUpdate.builder()).build());
+                        return Tuples.of(a.getKey(), DbUtils.modelToAttributeUpdateValue(mappedFields.get(a.getKey())._2(), a.getValue()).call(AttributeValueUpdate.builder()).build());
                     } else {
-                        return Tuple.of(a.getKey(), AttributeValueUpdate.builder().value(AttributeValue.builder().s(String.valueOf(a.getValue())).build()).build());
+                        return Tuples.of(a.getKey(), AttributeValueUpdate.builder().value(AttributeValue.builder().s(String.valueOf(a.getValue())).build()).build());
                     }
                 });
         final Map<String, AttributeValueUpdate> mappedUpdateValuesTmp = mappedValues.collect(Collectors.toMap(Tuple::_1, Tuple::_2));
@@ -320,7 +321,7 @@ final class BaseRepositoryUtils {
         mappedValues = MapperUtils.getMappedValues(item, dataClass)
                 .peek(a -> DbUtils.checkForNullFields(a._4(), a._2(), a._1()))
                 .filter(a -> a._1() != null)
-                .map(a -> Tuple.of(a._1(), DbUtils.modelToAttributeUpdateValue(a._3(), a._2()).call(AttributeValueUpdate.builder()).build()));
+                .map(a -> Tuples.of(a._1(), DbUtils.modelToAttributeUpdateValue(a._3(), a._2()).call(AttributeValueUpdate.builder()).build()));
 
         return Mono.fromFuture(DataMapperUtils
                 .getDynamoDbAsyncClient()

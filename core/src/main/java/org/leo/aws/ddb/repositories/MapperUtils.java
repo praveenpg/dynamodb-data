@@ -6,10 +6,7 @@ import org.leo.aws.ddb.exceptions.DbException;
 import org.leo.aws.ddb.model.VersionedEntity;
 import org.leo.aws.ddb.utils.exceptions.Issue;
 import org.leo.aws.ddb.utils.exceptions.UtilsException;
-import org.leo.aws.ddb.utils.model.Tuple;
-import org.leo.aws.ddb.utils.model.Tuple3;
-import org.leo.aws.ddb.utils.model.Tuple4;
-import org.leo.aws.ddb.utils.model.Utils;
+import org.leo.aws.ddb.utils.model.*;
 import org.springframework.core.env.Environment;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ReflectionUtils;
@@ -119,8 +116,8 @@ final class MapperUtils {
         final Set<String> pkFields = pkMapping.values().stream().map(Tuple::_1).collect(Collectors.toSet());
 
         return fieldMap.entrySet().stream()
-                .map(entry -> Tuple.of(entry.getKey(), entry.getValue()))
-                .map(a -> Tuple4.of(a._1(), ReflectionUtils.getField(a._2()._1(), input), a._2()._1(), a._2()._2()))
+                .map(entry -> Tuples.of(entry.getKey(), entry.getValue()))
+                .map(a -> Tuples.of(a._1(), ReflectionUtils.getField(a._2()._1(), input), a._2()._1(), a._2()._2()))
                 .filter(a -> !pkFields.contains(a._1()));
     }
 
@@ -131,8 +128,8 @@ final class MapperUtils {
         final Set<String> pkFields = pkMapping.values().stream().map(Tuple::_1).collect(Collectors.toSet());
 
         return fieldMap.entrySet().stream()
-                .map(entry -> Tuple.of(entry.getKey(), entry.getValue()))
-                .map(a -> Tuple3.of(a._1(), a._2()._1(), a._2()._2()))
+                .map(entry -> Tuples.of(entry.getKey(), entry.getValue()))
+                .map(a -> Tuples.of(a._1(), a._2()._1(), a._2()._2()))
                 .filter(a -> !pkFields.contains(a._1()));
     }
 
@@ -190,19 +187,19 @@ final class MapperUtils {
                 gsiList = gsis != null ? Arrays.asList(gsis.indices()) : Collections.singletonList(gsiElement);
 
                 if(hashKey != null) {
-                    primaryKeyMapping.put(KeyType.HASH_KEY, Tuple.of(fieldName, field));
+                    primaryKeyMapping.put(KeyType.HASH_KEY, Tuples.of(fieldName, field));
                 } else if(rangeKey != null) {
-                    primaryKeyMapping.put(KeyType.RANGE_KEY, Tuple.of(fieldName, field));
+                    primaryKeyMapping.put(KeyType.RANGE_KEY, Tuples.of(fieldName, field));
                 }
 
                 gsiList.stream().filter(Objects::nonNull).forEach(gsi -> setGsiBuilder(globalSecondaryIndexMap, field, fieldName, gsi));
 
                 fieldNameVal = getFieldName(dbAttribute, dateCreated, dateUpdated, field, builder);
 
-                mappedFields.put(fieldNameVal, Tuple.of(field, dbAttribute));
+                mappedFields.put(fieldNameVal, Tuples.of(field, dbAttribute));
 
                 if (versionAttribute != null) {
-                    versionAttMap.put(fieldNameVal, Tuple.of(field, dbAttribute));
+                    versionAttMap.put(fieldNameVal, Tuples.of(field, dbAttribute));
                 }
 
             }
@@ -212,7 +209,7 @@ final class MapperUtils {
     private static void setGsiBuilder(ConcurrentHashMap<String, GSI.Builder> globalSecondaryIndexMap, Field field, String fieldName, Index gsi) {
         final GSI.Builder gsiBuilder = globalSecondaryIndexMap.computeIfAbsent(gsi.name(), s -> GSI.builder(gsi.name())
                 .projectionType(gsi.projectionType()));
-        final Tuple<String, Field> keyTuple = Tuple.of(fieldName, field);
+        final Tuple<String, Field> keyTuple = Tuples.of(fieldName, field);
 
         switch (gsi.type()) {
             case HASH_KEY:
@@ -248,9 +245,9 @@ final class MapperUtils {
         }
 
         if(dateCreated != null) {
-            builder.dateCreatedField(Tuple.of(fieldName, field));
+            builder.dateCreatedField(Tuples.of(fieldName, field));
         } else if (dateUpdated != null) {
-            builder.dateUpdatedField(Tuple.of(fieldName, field));
+            builder.dateUpdatedField(Tuples.of(fieldName, field));
         }
 
         return fieldName;

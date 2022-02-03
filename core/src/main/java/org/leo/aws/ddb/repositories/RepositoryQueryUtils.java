@@ -7,6 +7,7 @@ import org.leo.aws.ddb.exceptions.DbException;
 import org.leo.aws.ddb.model.Page;
 import org.leo.aws.ddb.utils.Expr;
 import org.leo.aws.ddb.utils.model.Tuple;
+import org.leo.aws.ddb.utils.model.Tuples;
 import org.reactivestreams.Publisher;
 import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
@@ -71,7 +72,7 @@ final class RepositoryQueryUtils {
 
             queryPublisher = DataMapperUtils.getDynamoDbAsyncClient().queryPaginator(request);
 
-            return Tuple.of(secondaryIndex.getProjectionType(), queryPublisher);
+            return Tuples.of(secondaryIndex.getProjectionType(), queryPublisher);
         }
     }
 

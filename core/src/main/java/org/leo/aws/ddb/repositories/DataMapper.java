@@ -7,6 +7,7 @@ import org.leo.aws.ddb.model.PrimaryKey;
 import org.leo.aws.ddb.utils.DbUtils;
 import org.leo.aws.ddb.utils.model.Tuple;
 import org.leo.aws.ddb.utils.model.Tuple4;
+import org.leo.aws.ddb.utils.model.Tuples;
 import org.leo.aws.ddb.utils.model.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,9 +57,9 @@ interface DataMapper<T> {
         final Map<String, Tuple<Field, DbAttribute>> fieldMap = fieldMapping.getMappedFields();
 
         return fieldMapping.getMappedFields().keySet().stream()
-                           .map(key -> Tuple.of(key, ReflectionUtils.getField(fieldMap.get(key)._1(), input)))
+                           .map(key -> Tuples.of(key, ReflectionUtils.getField(fieldMap.get(key)._1(), input)))
                            .filter(a -> a._2() != null)
-                           .map(t -> Tuple.of(t._1(), DbUtils.modelToAttributeValue(fieldMap.get(t._1())._1(), t._2()).call(AttributeValue.builder()).build()))
+                           .map(t -> Tuples.of(t._1(), DbUtils.modelToAttributeValue(fieldMap.get(t._1())._1(), t._2()).call(AttributeValue.builder()).build()))
                            .collect(Collectors.toMap(Tuple::_1, Tuple::_2));
     }
 

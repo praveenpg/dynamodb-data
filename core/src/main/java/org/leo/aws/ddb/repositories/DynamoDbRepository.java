@@ -9,7 +9,7 @@ import org.leo.aws.ddb.model.PatchUpdate;
 import org.leo.aws.ddb.model.PrimaryKey;
 import org.leo.aws.ddb.model.UpdateItem;
 import org.leo.aws.ddb.utils.Expr;
-import org.leo.aws.ddb.utils.model.ApplicationContextUtils;
+import org.leo.aws.ddb.utils.ApplicationContextUtils;
 import org.leo.aws.ddb.utils.model.Tuple;
 import org.leo.aws.ddb.utils.model.Tuple4;
 import org.springframework.lang.NonNull;
@@ -69,7 +69,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
 
         if (dataMapper == null) {
             throw new DbException(MessageFormat.format("Could not find any entity of type [{0}] in the provided entityBasePackage [org.leo.aws.ddb.entityBasePackage: {1}]",
-                    type.getName(), ApplicationContextUtils.getEnvironment().getProperty("org.leo.aws.ddb.entityBasePackage")));
+                    type.getName(), ApplicationContextUtils.getInstance().getEnvironment().getProperty("org.leo.aws.ddb.entityBasePackage")));
         }
 
         return dataMapper.getPKMapping().get(KeyType.HASH_KEY)._1();
