@@ -1,4 +1,4 @@
-package org.leo.aws.ddb.utils.model;
+package org.leo.aws.ddb.utils;
 
 public class Tuples {
     public static <A, B> Tuple<A, B> of(final A first, final B second) {

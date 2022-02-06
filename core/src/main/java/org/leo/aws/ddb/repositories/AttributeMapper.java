@@ -4,7 +4,7 @@ package org.leo.aws.ddb.repositories;
 
 import org.leo.aws.ddb.annotations.DbAttribute;
 import org.leo.aws.ddb.annotations.KeyType;
-import org.leo.aws.ddb.utils.model.Tuple;
+import org.leo.aws.ddb.utils.Tuple;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;

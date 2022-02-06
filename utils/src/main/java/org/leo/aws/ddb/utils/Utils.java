@@ -1,4 +1,4 @@
-package org.leo.aws.ddb.utils.model;
+package org.leo.aws.ddb.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,8 +11,10 @@ import rx.functions.Func1;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.MessageFormat;
+import java.text.NumberFormat;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -113,6 +115,30 @@ public final class Utils {
         }
     }
 
+    public static <T> T invokeMethod(final Object obj, final String methodName) {
+        try {
+            final Method method = getMethod(obj.getClass(), methodName);
+
+            return (T) method.invoke(obj);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static <T> Method getMethod(final Class<T> clazz, final String methodName, final Class<?>... params) {
+        try {
+            final Method method = clazz.getDeclaredMethod(methodName, params);
+
+            method.setAccessible(true);
+
+            return method;
+        } catch (final Exception e) {
+            throw new UtilsException(Issue.UNKNOWN_ERROR, e);
+        }
+    }
+
     public static <T> T getFromFromFuture(final Future<T> future) {
         try {
             return future.get();
@@ -150,4 +176,11 @@ public final class Utils {
         return builder.build();
     }
 
+    public static String getUnformattedNumber(final Number number) {
+        final NumberFormat numberFormat = NumberFormat.getNumberInstance();
+
+        numberFormat.setGroupingUsed(false);
+
+        return numberFormat.format(number);
+    }
 }

@@ -3,7 +3,7 @@ package org.leo.aws.ddb.repositories;
 import org.leo.aws.ddb.annotations.KeyType;
 import org.leo.aws.ddb.annotations.ProjectionType;
 import org.leo.aws.ddb.exceptions.DbException;
-import org.leo.aws.ddb.utils.model.Tuple;
+import org.leo.aws.ddb.utils.Tuple;
 
 import java.lang.reflect.Field;
 import java.util.Objects;

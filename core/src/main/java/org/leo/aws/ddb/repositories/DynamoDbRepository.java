@@ -10,13 +10,15 @@ import org.leo.aws.ddb.model.PrimaryKey;
 import org.leo.aws.ddb.model.UpdateItem;
 import org.leo.aws.ddb.utils.Expr;
 import org.leo.aws.ddb.utils.ApplicationContextUtils;
-import org.leo.aws.ddb.utils.model.Tuple;
-import org.leo.aws.ddb.utils.model.Tuple4;
+import org.leo.aws.ddb.utils.Tuple;
+import org.leo.aws.ddb.utils.Tuple4;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 import rx.functions.Action2;
 import rx.functions.Func1;
+import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.DeleteRequest;
 import software.amazon.awssdk.services.dynamodb.model.PutRequest;
@@ -35,6 +37,10 @@ import java.util.stream.Stream;
 public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RECORD_TYPE> {
     int DEFAULT_PAGE_SIZE = 20;
 
+    default DynamoDbAsyncClient dynamoDbClient() {
+        return DataMapperUtils.getDynamoDbAsyncClient();
+    }
+
     /**
      * @return Range Key name
      */
@@ -46,14 +52,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return Entity class
      */
     default Class<ENTITY_TYPE> getParameterType() {
-        return RepositoryQueryUtils.getRepoParameterType(this);
-    }
-
-    /**
-     * @return Primary Key Mapping. This is a combination of the hash key and range key
-     */
-    default Map<KeyType, Tuple<String, Field>> getPkMapping() {
-        return DataMapperUtils.getDataMapper(getParameterType()).getPKMapping();
+        return BaseRepositoryUtils.getInstance().getRepoParameterType(this);
     }
 
     default PrimaryKey getPrimaryKey(final ENTITY_TYPE item) {
@@ -68,8 +67,8 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
         final DataMapper<ENTITY_TYPE> dataMapper = DataMapperUtils.getDataMapper(getParameterType());
 
         if (dataMapper == null) {
-            throw new DbException(MessageFormat.format("Could not find any entity of type [{0}] in the provided entityBasePackage [org.leo.aws.ddb.entityBasePackage: {1}]",
-                    type.getName(), ApplicationContextUtils.getInstance().getEnvironment().getProperty("org.leo.aws.ddb.entityBasePackage")));
+            throw new DbException(MessageFormat.format("Could not find any entity of type [{0}] in the provided entityBasePackage [service.aws.ddb.entityBasePackage: {1}]",
+                    type.getName(), ApplicationContextUtils.getInstance().getEnvironment().getProperty("service.aws.ddb.entityBasePackage")));
         }
 
         return dataMapper.getPKMapping().get(KeyType.HASH_KEY)._1();
@@ -92,6 +91,16 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
 
         return includeNullValues ? fieldMappings.collect(Collectors.toMap(Tuple4::_1, Tuple4::_2)) :
                 fieldMappings.filter(c -> c._2() != null).collect(Collectors.toMap(Tuple4::_1, Tuple4::_2));
+    }
+
+    /**
+     * Returns a list of values matching hash key value passed.
+     *
+     * @param hashKeyValue Hash Key value
+     * @return List of entity objects
+     */
+    default MULTIPLE_RECORD_TYPE findByHashKey(final Object hashKeyValue) {
+        return findByHashKey(getHashKeyName(), hashKeyValue, null, null);
     }
 
     /**
@@ -151,11 +160,11 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @param indexName       The GSI index name. This is used if the optional parameter has a value
      * @return A Flux representing the list of values satisfying the above conditions.
      */
-    default MULTIPLE_RECORD_TYPE findByHashKey(String hashKeyName,
-                                               Object hashKeyValueObj,
-                                               @Nullable Page page,
-                                               @Nullable String indexName,
-                                               @Nullable Expr expr) {
+    default MULTIPLE_RECORD_TYPE findByHashKey(final String hashKeyName,
+                                               final Object hashKeyValueObj,
+                                               @Nullable final Page page,
+                                               @Nullable final String indexName,
+                                               @Nullable final Expr expr) {
 
         return findByHashKeyAndRangeKeyStartsWith(hashKeyName, hashKeyValueObj, null, null, page, indexName, expr);
     }
@@ -224,13 +233,13 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @param expr            filter expression
      * @return list of entities
      */
-    default MULTIPLE_RECORD_TYPE findByHashKeyAndRangeKeyStartsWith(String hashKey,
-                                                                    Object hashKeyValueObj,
-                                                                    String rangeKey,
-                                                                    String rangeKeyValue,
-                                                                    @Nullable Page page,
-                                                                    @Nullable String indexName,
-                                                                    @Nullable Expr expr) {
+    default MULTIPLE_RECORD_TYPE findByHashKeyAndRangeKeyStartsWith(final String hashKey,
+                                                                    final Object hashKeyValueObj,
+                                                                    final String rangeKey,
+                                                                    final String rangeKeyValue,
+                                                                    @Nullable final Page page,
+                                                                    @Nullable final String indexName,
+                                                                    @Nullable final Expr expr) {
 
         return findByHashKeyAndRangeKeyStartsWithPagination(hashKey, hashKeyValueObj, rangeKey, rangeKeyValue, page, indexName, expr);
     }
@@ -253,25 +262,24 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
     }
 
     /**
-     *
-     * @param hashKey Hash Key Name
+     * @param hashKey         Hash Key Name
      * @param hashKeyValueObj Hash Key Value
-     * @param rangeKey Range Key Name
-     * @param rangeKeyValue Range Key Value
-     * @param page Page
-     * @param indexName Index name
-     * @param expr Filter Expression
+     * @param rangeKey        Range Key Name
+     * @param rangeKeyValue   Range Key Value
+     * @param page            Page
+     * @param indexName       Index name
+     * @param expr            Filter Expression
      * @return Records matching above criteria
      */
-    default MULTIPLE_RECORD_TYPE findByHashKeyAndRangeKeyStartsWithPagination(String hashKey,
-                                                                      Object hashKeyValueObj,
-                                                                      String rangeKey,
-                                                                      String rangeKeyValue,
-                                                                      @Nullable Page page,
-                                                                      @Nullable String indexName,
-                                                                      @Nullable Expr expr) {
+    default MULTIPLE_RECORD_TYPE findByHashKeyAndRangeKeyStartsWithPagination(final String hashKey,
+                                                                              final Object hashKeyValueObj,
+                                                                              final String rangeKey,
+                                                                              final String rangeKeyValue,
+                                                                              @Nullable final Page page,
+                                                                              @Nullable final String indexName,
+                                                                              @Nullable final Expr expr) {
 
-        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(RepositoryQueryUtils.findByHashKeyAndRangeKeyStartsWithPagination(hashKey,
+        return BaseRepositoryUtils.getInstance().processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.getInstance().findByHashKeyAndRangeKeyStartsWithPagination(hashKey,
                 hashKeyValueObj,
                 rangeKey,
                 rangeKeyValue,
@@ -306,36 +314,36 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
 
 
     /**
-     * @param indexName name of the GSI
+     * @param indexName       name of the GSI
      * @param hashKeyValueObj Hash Key Value
-     * @param expr Filter Expression
+     * @param expr            Filter Expression
      * @return Multiple records
      */
     default MULTIPLE_RECORD_TYPE findByGlobalSecondaryIndex(@NonNull final String indexName,
-                                                    final Object hashKeyValueObj,
-                                                    @Nullable final Expr expr) {
+                                                            final Object hashKeyValueObj,
+                                                            @Nullable final Expr expr) {
 
         return findByGlobalSecondaryIndex(indexName, hashKeyValueObj, null, expr);
     }
 
     /**
-     * @param indexName name of the GSI
+     * @param indexName       name of the GSI
      * @param hashKeyValueObj Hash Key Value
-     * @param rangeKeyValue Range Key Value
-     * @param expr Filter Expression
+     * @param rangeKeyValue   Range Key Value
+     * @param expr            Filter Expression
      * @return Multiple records
      */
     default MULTIPLE_RECORD_TYPE findByGlobalSecondaryIndex(@NonNull final String indexName,
-                                                    final Object hashKeyValueObj,
-                                                    final Object rangeKeyValue,
-                                                    @Nullable final Expr expr) {
+                                                            final Object hashKeyValueObj,
+                                                            final Object rangeKeyValue,
+                                                            @Nullable final Expr expr) {
 
-        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.findByGlobalSecondaryIndex(indexName,
+        return BaseRepositoryUtils.getInstance().processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.getInstance().findByGlobalSecondaryIndex(indexName,
                 hashKeyValueObj,
                 rangeKeyValue,
                 this::getPrimaryKey,
                 this::getParameterType,
-                pks -> BaseRepositoryUtils.findByPrimaryKeys(pks, this::getParameterType),
+                pks -> BaseRepositoryUtils.getInstance().findByPrimaryKeys(pks, this::getParameterType),
                 expr), this);
     }
 
@@ -364,35 +372,58 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @param limit Page Size
      * @return List of all records
      */
-    default MULTIPLE_RECORD_TYPE findAll(int limit) {
-        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.findAll(limit, this::getParameterType), this);
+    default MULTIPLE_RECORD_TYPE findAll(final int limit) {
+        return BaseRepositoryUtils.getInstance().processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.getInstance().findAll(limit, this::getParameterType), this);
     }
 
     /**
      * @param expr Filter Expression
-     * @return All records that satisfies the filter criteria
+     * @return All records that satisfy the filter criteria
      */
     default MULTIPLE_RECORD_TYPE findAll(@Nullable final Expr expr) {
         return findAll(expr, DEFAULT_PAGE_SIZE);
     }
 
     /**
-     * @param expr @param expr Filter Expression
+     * @param expr  @param expr Filter Expression
      * @param limit limit
-     * @return All records that satisfies the filter criteria
+     * @return All records that satisfy the filter criteria
      */
     default MULTIPLE_RECORD_TYPE findAll(@Nullable final Expr expr, final int limit) {
-        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.findAll(expr, limit, this::getParameterType), this);
+        return BaseRepositoryUtils.getInstance().processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.getInstance().findAll(expr, limit, this::getParameterType), this);
     }
 
     /**
-     * Returns a record which matches the primary key passed passed
+     * Returns a record which matches the primary key passed
      *
      * @param primaryKey Primary Key (this should have both the hash key and the sort key populated)
      * @return A mono representing a record which matches the primary key passed.
      */
     default SINGLE_RECORD_TYPE findByPrimaryKey(@NonNull final PrimaryKey primaryKey) {
-        return RepositoryQueryUtils.processRepositoryResponseForSingleRecord(BaseRepositoryUtils.findByPrimaryKey(primaryKey, this::getParameterType), this);
+        return BaseRepositoryUtils.getInstance().processRepositoryResponseForSingleRecord(BaseRepositoryUtils.getInstance().findByPrimaryKey(primaryKey, this::getParameterType), this);
+    }
+
+    default SINGLE_RECORD_TYPE findByPrimaryKey(final Object hashKeyValue) {
+        final String hashKeyName = getHashKeyName();
+        final Tuple<String, Field> rangeKey = DataMapperUtils.getDataMapper(getParameterType()).getPKMapping().get(KeyType.RANGE_KEY);
+        final String rangeKeyName = rangeKey == null ? null : rangeKey._1();
+
+        if (!StringUtils.isEmpty(rangeKeyName)) {
+            throw new DbException("This method cannot be used for entities that has a range key");
+        }
+
+        return findByPrimaryKey(PrimaryKey.builder().hashKeyName(hashKeyName).hashKeyValue(hashKeyValue).build());
+    }
+
+    default SINGLE_RECORD_TYPE findByPrimaryKey(final Object hashKeyValue, final Object rangeKeyValue) {
+        final String hashKeyName = getHashKeyName();
+        final String rangeKeyName = getRangeKeyName();
+
+        if (StringUtils.isEmpty(rangeKeyName)) {
+            throw new DbException("This method cannot be used for entities that does not have a range key");
+        }
+
+        return findByPrimaryKey(PrimaryKey.builder().hashKeyName(hashKeyName).hashKeyValue(hashKeyValue).rangeKeyName(rangeKeyName).rangeKeyValue(rangeKeyValue).build());
     }
 
     /**
@@ -404,12 +435,11 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
     }
 
     /**
-     *
      * @param primaryKeys List of primary keys
      * @return Records matching above criteria
      */
     default MULTIPLE_RECORD_TYPE findByPrimaryKeys(@NonNull final List<PrimaryKey> primaryKeys) {
-        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.findByPrimaryKeys(primaryKeys, this::getParameterType), this);
+        return BaseRepositoryUtils.getInstance().processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.getInstance().findByPrimaryKeys(primaryKeys, this::getParameterType), this);
     }
 
     /**
@@ -420,22 +450,24 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      */
     default SINGLE_RECORD_TYPE putItem(@NonNull final ENTITY_TYPE item) {
         final DataMapper<ENTITY_TYPE> dataMapper = DataMapperUtils.getDataMapper(getParameterType());
-        final Action2<ENTITY_TYPE, Map<String, AttributeValue>> ttlAction = (a, b) -> {};
+        final Action2<ENTITY_TYPE, Map<String, AttributeValue>> ttlAction = (a, b) -> {
+        };
 
         return putItem(item, ttlAction);
     }
 
     /**
-     *
-     * @param item Item being saved. This is an upsert operation
+     * @param item      Item being saved. This is an upsert operation
      * @param ttlAction TTL function
      * @return Record being saved
      */
     default SINGLE_RECORD_TYPE putItem(@NonNull final ENTITY_TYPE item, final Action2<ENTITY_TYPE, Map<String, AttributeValue>> ttlAction) {
-        return RepositoryQueryUtils.processRepositoryResponseForSingleRecord(Mono.fromFuture(BaseRepositoryUtils
-                .saveItem(item, true,
-                        ttlAction,
-                        DataMapperUtils.getDataMapper(getParameterType()))), this);
+        return BaseRepositoryUtils.getInstance().processRepositoryResponseForSingleRecord(
+                Mono.defer(() -> Mono.fromFuture(BaseRepositoryUtils.getInstance()
+                        .saveItem(item, true,
+                                ttlAction,
+                                DataMapperUtils.getDataMapper(getParameterType())))),
+                this);
     }
 
     /**
@@ -445,7 +477,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return A future
      */
     default MULTIPLE_RECORD_TYPE putItem(@NonNull final List<ENTITY_TYPE> items) {
-        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.batchWriteRequest(dataMapper -> items.stream().map(item -> WriteRequest.builder()
+        return BaseRepositoryUtils.getInstance().processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.getInstance().batchWriteRequest(dataMapper -> items.stream().map(item -> WriteRequest.builder()
                 .putRequest(PutRequest.builder()
                         .item(dataMapper.mapToValue(item))
                         .build())
@@ -459,7 +491,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return updated item
      */
     default SINGLE_RECORD_TYPE updateItem(@NonNull final ENTITY_TYPE item) {
-        return RepositoryQueryUtils.processRepositoryResponseForSingleRecord(BaseRepositoryUtils.updateItem(item, this::getPrimaryKey, this::getParameterType), this);
+        return BaseRepositoryUtils.getInstance().processRepositoryResponseForSingleRecord(BaseRepositoryUtils.getInstance().updateItem(item, this::getPrimaryKey, this::getParameterType), this);
     }
 
     /**
@@ -468,7 +500,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return A future representing the execution of the method
      */
     default SINGLE_RECORD_TYPE updateItem(@NonNull final PrimaryKey primaryKey, @NonNull final Map<String, Object> updatedValues) {
-        return RepositoryQueryUtils.processRepositoryResponseForSingleRecord(BaseRepositoryUtils.updateItem(primaryKey, updatedValues, pk -> BaseRepositoryUtils.findByPrimaryKey(pk, this::getParameterType), this::getParameterType), this);
+        return BaseRepositoryUtils.getInstance().processRepositoryResponseForSingleRecord(BaseRepositoryUtils.getInstance().updateItem(primaryKey, updatedValues, pk -> BaseRepositoryUtils.getInstance().findByPrimaryKey(pk, this::getParameterType), this::getParameterType), this);
     }
 
     /**
@@ -480,7 +512,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
     }
 
     /**
-     * Method updates a list of records/documents. Please not that DynamoDb as of today does not
+     * Method updates a list of records/documents. Please note that DynamoDb as of today does not
      * support a batch update. This method updates the records one at a time. It will do a batch update
      * once DynamoDB/AWS SDK adds support without forcing the client application to make a change.
      *
@@ -488,18 +520,18 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return A future representing the execution of the method
      */
     default MULTIPLE_RECORD_TYPE updateItem(@NonNull final List<UpdateItem> updateItems) {
-        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils
-                .updateItem(updateItems, this::getParameterType, pks -> BaseRepositoryUtils.findByPrimaryKeys(pks, this::getParameterType)), this);
+        return BaseRepositoryUtils.getInstance().processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.getInstance()
+                .updateItem(updateItems, this::getParameterType, pks -> BaseRepositoryUtils.getInstance().findByPrimaryKeys(pks, this::getParameterType)), this);
     }
 
     /**
-     * Method updates a list of records/documents. Please not that DynamoDb as of today does not
+     * Method updates a list of records/documents. Please note that DynamoDb as of today does not
      * support a batch update. This method updates the records one at a time. It will do a batch update
      * once DynamoDB/AWS SDK adds support without forcing the client application to make a change.
      *
      * @param keyValue     Key Value
      * @param patchUpdates PatchUpdate list
-     * @param convertFunc Function to convert PatchItem to UpdateItem
+     * @param convertFunc  Function to convert PatchItem to UpdateItem
      * @return Updated records
      */
     default MULTIPLE_RECORD_TYPE updateItems(final String keyValue, @NonNull final List<? extends PatchUpdate> patchUpdates, final Func1<PatchUpdate, UpdateItem> convertFunc) {
@@ -513,7 +545,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return A future
      */
     default MULTIPLE_RECORD_TYPE deleteAllItems(@NonNull final List<ENTITY_TYPE> items) {
-        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.batchWriteRequest(dataMapper -> items.stream().map(item -> WriteRequest.builder()
+        return BaseRepositoryUtils.getInstance().processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.getInstance().batchWriteRequest(dataMapper -> items.stream().map(item -> WriteRequest.builder()
                 .deleteRequest(DeleteRequest.builder()
                         .key(dataMapper.getPrimaryKey(dataMapper.createPKFromItem(item)))
                         .build())
@@ -528,9 +560,8 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return A future
      */
     default MULTIPLE_RECORD_TYPE batchWrite(final List<ENTITY_TYPE> putItems, final List<ENTITY_TYPE> deleteItems) {
-        return RepositoryQueryUtils.processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.batchWrite(putItems, deleteItems, this::getParameterType), this);
+        return BaseRepositoryUtils.getInstance().processRepositoryResponseForMultipleRecords(BaseRepositoryUtils.getInstance().batchWrite(putItems, deleteItems, this::getParameterType), this);
     }
-
 
 
     /**
@@ -540,7 +571,7 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
      * @return A future
      */
     default SINGLE_RECORD_TYPE deleteItem(@NonNull final ENTITY_TYPE item) {
-        return RepositoryQueryUtils.processRepositoryResponseForSingleRecord(BaseRepositoryUtils.deleteItem(item, this::getParameterType), this);
+        return BaseRepositoryUtils.getInstance().processRepositoryResponseForSingleRecord(BaseRepositoryUtils.getInstance().deleteItem(item, this::getParameterType), this);
     }
 
     /**
@@ -562,15 +593,23 @@ public interface DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTIPLE_RE
     default SINGLE_RECORD_TYPE saveItem(@NonNull final ENTITY_TYPE item) {
         final DataMapper<ENTITY_TYPE> dataMapper = DataMapperUtils.getDataMapper(getParameterType());
 
-        return saveItem(item, (entity, attributeValueMap) -> {});
+        return saveItem(item, (entity, attributeValueMap) -> {
+        });
     }
 
     /**
-     * @param item Item being saved. This is an insert operation.
+     * @param item      Item being saved. This is an insert operation.
      * @param ttlAction TTL action
      * @return Item being saved
      */
     default SINGLE_RECORD_TYPE saveItem(final ENTITY_TYPE item, final Action2<ENTITY_TYPE, Map<String, AttributeValue>> ttlAction) {
-        return RepositoryQueryUtils.processRepositoryResponseForSingleRecord(Mono.fromFuture(BaseRepositoryUtils.saveItem(item, false, ttlAction, DataMapperUtils.getDataMapper(getParameterType()))), this);
+        return BaseRepositoryUtils.getInstance().processRepositoryResponseForSingleRecord(
+                Mono.defer(() ->
+                        Mono.fromFuture(BaseRepositoryUtils.getInstance()
+                                .saveItem(item,
+                                        false,
+                                        ttlAction,
+                                        DataMapperUtils.getDataMapper(getParameterType())))),
+                this);
     }
 }

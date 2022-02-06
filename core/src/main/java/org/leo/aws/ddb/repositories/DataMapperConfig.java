@@ -2,8 +2,8 @@ package org.leo.aws.ddb.repositories;
 
 
 import org.leo.aws.ddb.utils.ApplicationContextUtils;
-import org.leo.aws.ddb.utils.model.Tuple;
-import org.leo.aws.ddb.utils.model.Tuples;
+import org.leo.aws.ddb.utils.Tuple;
+import org.leo.aws.ddb.utils.Tuples;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
