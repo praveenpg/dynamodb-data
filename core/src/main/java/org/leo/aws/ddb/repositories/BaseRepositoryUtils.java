@@ -545,7 +545,7 @@ enum BaseRepositoryUtils {
     }
 
     <ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> Class<ENTITY_TYPE> getRepoParameterType(
-            final DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> baseRepository) {
+            final AbstractDynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> baseRepository) {
 
         return (Class<ENTITY_TYPE>) repoParameterTypeMap.computeIfAbsent(baseRepository.getClass().getName(), s -> {
             final DdbRepository annotation = baseRepository.getClass().getAnnotation(DdbRepository.class);
@@ -635,26 +635,26 @@ enum BaseRepositoryUtils {
 
     <ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> SINGLE_RECORD_TYPE processRepositoryResponseForSingleRecord(
             final Mono<ENTITY_TYPE> returnedRecord,
-            final DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> repo) {
+            final AbstractDynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> repo) {
 
         return processRepositoryResult(returnedRecord, repo, record -> (SINGLE_RECORD_TYPE) ((Mono<ENTITY_TYPE>) record).block());
     }
 
     <ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> MULTI_RECORD_TYPE processRepositoryResponseForMultipleRecords(
             final Flux<ENTITY_TYPE> returnedRecords,
-            final DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> repo) {
+            final AbstractDynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> repo) {
 
         return processRepositoryResult(returnedRecords, repo, records -> (MULTI_RECORD_TYPE) ((Flux<ENTITY_TYPE>) records).collectList().block());
     }
 
     private <ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE, RETURN_TYPE> RETURN_TYPE processRepositoryResult(
             final Publisher<ENTITY_TYPE> data,
-            final DynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> repo,
+            final AbstractDynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> repo,
             final Func1<Publisher<ENTITY_TYPE>, RETURN_TYPE> func) {
 
         if (repo instanceof BlockingBaseRepository) {
             return func.call(data);
-        } else if (repo instanceof NonBlockingBaseRepository) {
+        } else if (repo instanceof DynamoDbRepository) {
             return (RETURN_TYPE) data;
         } else {
             throw new DbException("Repository should either implement BlockingBaseRepository or NonBlockingBaseRepository");

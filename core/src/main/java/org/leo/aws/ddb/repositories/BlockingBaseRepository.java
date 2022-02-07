@@ -2,5 +2,5 @@ package org.leo.aws.ddb.repositories;
 
 import java.util.List;
 
-public interface BlockingBaseRepository<T> extends DynamoDbRepository<T, T, List<T>> {
+public interface BlockingBaseRepository<T> extends AbstractDynamoDbRepository<T, T, List<T>> {
 }
