@@ -1,4 +1,4 @@
-package org.leo.aws.ddb.utils.model;
+package org.leo.aws.ddb.utils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -9,7 +9,7 @@ public final class Tuple<A, B> implements ITuple {
     private final A first;
     private final B second;
 
-    private Tuple(final A first, final B second) {
+    Tuple(final A first, final B second) {
         this.first = first;
         this.second = second;
     }
@@ -36,15 +36,11 @@ public final class Tuple<A, B> implements ITuple {
     }
 
     public <C> Tuple3<A, B, C> append(final C third) {
-        return Tuple3.of(first, second, third);
+        return Tuples.of(first, second, third);
     }
 
     public Iterable<?> toIterable() {
         return Collections.unmodifiableList(Arrays.asList(first, second));
-    }
-
-    public static <A, B> Tuple<A, B> of(final A first, final B second) {
-        return new Tuple<>(first, second);
     }
 
     @Override

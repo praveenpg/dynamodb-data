@@ -1,4 +1,4 @@
-package org.leo.aws.ddb.utils.model;
+package org.leo.aws.ddb.utils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -9,9 +9,9 @@ public final class Tuple6<A, B, C, D, E, F> implements ITuple {
     private final Tuple3<A, B, C> firstThroughThird;
     private final Tuple3<D, E, F> fourthThroughSixth;
 
-    private Tuple6(final A first, final B second, final C third, final D fourth, final E fifth, final F sixth) {
-        this.firstThroughThird = Tuple3.of(first, second, third);
-        this.fourthThroughSixth = Tuple3.of(fourth, fifth, sixth);
+    Tuple6(final A first, final B second, final C third, final D fourth, final E fifth, final F sixth) {
+        this.firstThroughThird = Tuples.of(first, second, third);
+        this.fourthThroughSixth = Tuples.of(fourth, fifth, sixth);
     }
 
     public A _1() {
@@ -39,19 +39,11 @@ public final class Tuple6<A, B, C, D, E, F> implements ITuple {
     }
 
     public <G> Tuple7<A, B, C, D, E, F, G> append(final G seventh) {
-        return Tuple7.of(_1(), _2(), _3(), _4(), _5(), _6(), seventh);
+        return Tuples.of(_1(), _2(), _3(), _4(), _5(), _6(), seventh);
     }
 
     public Iterable<?> toIterable() {
         return Collections.unmodifiableList(Arrays.asList(_1(), _2(), _3(), _4(), _5(), _6()));
-    }
-
-    public static <A, B, C, D, E, F> Tuple6<A, B, C, D, E, F> of(final A first, final B second, final C third, final D fourth, final E fifth, final F sixth) {
-        return new Tuple6<>(first, second, third, fourth, fifth, sixth);
-    }
-
-    public static <A, B, C, D, E, F> Tuple6<A, B, C, D, E, F> of(Tuple5<A, B, C, D, E> tuple, final F sixth) {
-        return new Tuple6<>(tuple._1(), tuple._2(), tuple._3(), tuple._4(), tuple._5(), sixth);
     }
 
     @Override

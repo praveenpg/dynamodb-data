@@ -43,6 +43,6 @@ public class DataMapperConfigCleanUp {
             }
         });
 
-        dataMapperMap.forEach((key, value) -> MapperUtils.setDbAttributes(value.getParameterType(), environment, value));
+        dataMapperMap.forEach((key, value) -> MapperUtils.INSTANCE.setDbAttributes(value.getParameterType(), environment, value));
     }
 }

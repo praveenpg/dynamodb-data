@@ -1,4 +1,4 @@
-package org.leo.aws.ddb.utils.model;
+package org.leo.aws.ddb.utils;
 
 import java.util.Objects;
 

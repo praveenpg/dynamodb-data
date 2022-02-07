@@ -8,8 +8,6 @@ import org.leo.aws.ddb.annotations.DbAttribute;
 import org.leo.aws.ddb.exceptions.DbException;
 import org.leo.aws.ddb.utils.exceptions.Issue;
 import org.leo.aws.ddb.utils.exceptions.UtilsException;
-import org.leo.aws.ddb.utils.model.Tuple;
-import org.leo.aws.ddb.utils.model.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
@@ -427,7 +425,7 @@ public final class DbUtils {
         final AttributeValue.Builder builder = AttributeValue.builder();
         final Object value = entry.getValue();
 
-        return Tuple.of(entry.getKey(), modelToAttributeValue(value, value.getClass(), list -> {
+        return Tuples.of(entry.getKey(), modelToAttributeValue(value, value.getClass(), list -> {
             if (CollectionUtils.isEmpty(list)) {
                 return String.class;
             } else {
@@ -442,7 +440,7 @@ public final class DbUtils {
         final Tuple<String, Field> dateUpdateFieldTuple = dateUpdateFieldTupleFunc.call();
 
         if (dateUpdateFieldTuple != null && !updatedValues.containsKey(dateUpdateFieldTuple._1())) {
-            final Tuple<String, AttributeValueUpdate> tuple = Tuple.of(dateUpdateFieldTuple._1(),
+            final Tuple<String, AttributeValueUpdate> tuple = Tuples.of(dateUpdateFieldTuple._1(),
                     AttributeValueUpdate.builder().value(AttributeValue.builder()
                             .s(ZonedDateTime.now(SERVER_TIME_ZONE.toZoneId())
                                     .format(DATE_TIME_FORMATTER)).build()).build());

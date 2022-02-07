@@ -1,13 +1,16 @@
 package org.leo.aws.ddb.repositories;
 
 
-import org.leo.aws.ddb.utils.model.ApplicationContextUtils;
-import org.leo.aws.ddb.utils.model.Tuple;
+import org.leo.aws.ddb.utils.ApplicationContextUtils;
+import org.leo.aws.ddb.utils.Tuple;
+import org.leo.aws.ddb.utils.Tuples;
+import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,14 +28,18 @@ public class DataMapperConfig {
 
     @Bean
     public Map<Class, DataMapper> dataMapperMap() {
-        final Map<String, DataMapper> beans = applicationContext.getBeansOfType(DataMapper.class);
+        try {
+            final Map<String, DataMapper> beans = applicationContext.getBeansOfType(DataMapper.class);
+            final Method method = ApplicationContextUtils.class.getDeclaredMethod("init", ApplicationContext.class, Environment.class);
 
-        ApplicationContextUtils.setApplicationContext(applicationContext);
-        ApplicationContextUtils.setEnvironment(environment);
+            method.invoke(null, applicationContext, environment);
 
-        return new HashMap<>(beans.values().stream()
-                .map(bean -> Tuple.of(getParameterType(bean), bean))
-                .collect(Collectors.toMap(Tuple::_1, Tuple::_2)));
+            return new HashMap<>(beans.values().stream()
+                    .map(bean -> Tuples.of(getParameterType(bean), bean))
+                    .collect(Collectors.toMap(Tuple::_1, Tuple::_2)));
+        } catch (final Exception ex) {
+            throw new BeanInitializationException("Exception while create dataMapperMap", ex);
+        }
     }
 
     private Class getParameterType(final DataMapper<?> dataMapper) {

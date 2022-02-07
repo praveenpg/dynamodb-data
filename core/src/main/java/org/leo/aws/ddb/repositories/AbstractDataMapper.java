@@ -2,7 +2,7 @@ package org.leo.aws.ddb.repositories;
 
 
 import org.leo.aws.ddb.annotations.KeyType;
-import org.leo.aws.ddb.utils.model.Tuple;
+import org.leo.aws.ddb.utils.Tuple;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -35,7 +35,7 @@ abstract class AbstractDataMapper<T> implements DataMapper<T> {
 
     @SuppressWarnings("unchecked")
     private String getPKKey(final KeyType keyType) {
-        final AttributeMapper<T> fieldMapping = (AttributeMapper<T>) MapperUtils.ATTRIBUTE_MAPPING_MAP.get(getParameterType().getName());
+        final AttributeMapper<T> fieldMapping = (AttributeMapper<T>) MapperUtils.INSTANCE.getAttributeMappingMap().get(getParameterType().getName());
         final Map<KeyType, Tuple<String, Field>> pkMapping = fieldMapping.getPrimaryKeyMapping();
 
         return pkMapping.get(keyType)._2().getName();

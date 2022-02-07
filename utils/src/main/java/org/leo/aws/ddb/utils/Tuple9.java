@@ -1,4 +1,4 @@
-package org.leo.aws.ddb.utils.model;
+package org.leo.aws.ddb.utils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -9,9 +9,9 @@ public final class Tuple9<A, B, C, D, E, F, G, H, I> implements ITuple {
     private final Tuple4<A, B, C, D> firstThroughFourth;
     private final Tuple5<E, F, G, H, I> fifthThroughNinth;
 
-    private Tuple9(final A first, final B second, final C third, final D fourth, final E fifth, final F sixth, final G seventh, final H eighth, final I ninth) {
-        this.firstThroughFourth = Tuple4.of(first, second, third, fourth);
-        this.fifthThroughNinth = Tuple5.of(fifth, sixth, seventh, eighth, ninth);
+    Tuple9(final A first, final B second, final C third, final D fourth, final E fifth, final F sixth, final G seventh, final H eighth, final I ninth) {
+        this.firstThroughFourth = Tuples.of(first, second, third, fourth);
+        this.fifthThroughNinth = Tuples.of(fifth, sixth, seventh, eighth, ninth);
     }
 
     public A _1() {
@@ -52,10 +52,6 @@ public final class Tuple9<A, B, C, D, E, F, G, H, I> implements ITuple {
 
     public Iterable<?> toIterable() {
         return Collections.unmodifiableList(Arrays.asList(_1(), _2(), _3(), _4(), _5(), _6(), _7(), _8(), _9()));
-    }
-
-    public static <A, B, C, D, E, F, G, H, I> Tuple9<A, B, C, D, E, F, G, H, I> of(final A first, final B second, final C third, final D fourth, final E fifth, final F sixth, final G seventh, final H eighth, final I ninth) {
-        return new Tuple9<>(first, second, third, fourth, fifth, sixth, seventh, eighth, ninth);
     }
 
     @Override

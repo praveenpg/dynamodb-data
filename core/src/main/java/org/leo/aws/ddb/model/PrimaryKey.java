@@ -16,8 +16,12 @@ public final class PrimaryKey {
         this.rangeKeyValue = rangeKeyValue;
     }
 
-    public static PrimaryKeyBuilder builder() {
+    public static Builder builder() {
         return new PrimaryKeyBuilder();
+    }
+
+    public static Builder builder(final String hashKeyName, final Object hashKeyValue) {
+        return new PrimaryKeyBuilder().hashKeyName(hashKeyName).hashKeyValue(hashKeyValue);
     }
 
     /**
@@ -49,6 +53,10 @@ public final class PrimaryKey {
         return this.rangeKeyValue;
     }
 
+    public Builder toBuilder() {
+        return builder(hashKeyName, hashKeyValue).rangeKeyValue(hashKeyValue).rangeKeyValue(rangeKeyValue);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -75,11 +83,24 @@ public final class PrimaryKey {
                 ']';
     }
 
-    public static class PrimaryKeyBuilder {
+    public interface Builder {
+
+        Builder hashKeyName(String hashKeyName);
+
+        Builder hashKeyValue(Object hashKeyValue);
+
+        Builder rangeKeyName(String rangeKeyName);
+
+        Builder rangeKeyValue(Object rangeKeyValue);
+
+        PrimaryKey build();
+    }
+
+    private static class PrimaryKeyBuilder implements Builder {
         private String hashKeyName;
-        private String hashKeyValue;
+        private Object hashKeyValue;
         private String rangeName;
-        private String rangeKeyValue;
+        private Object rangeKeyValue;
 
         PrimaryKeyBuilder() {
         }
@@ -89,7 +110,8 @@ public final class PrimaryKey {
          * @param hashKeyName Hash Key Name
          * @return Builder
          */
-        public PrimaryKeyBuilder hashKeyName(final String hashKeyName) {
+        @Override
+        public Builder hashKeyName(final String hashKeyName) {
             this.hashKeyName = hashKeyName;
             return this;
         }
@@ -99,7 +121,8 @@ public final class PrimaryKey {
          * @param hashKeyValue Hash Key Value
          * @return Builder
          */
-        public PrimaryKeyBuilder hashKeyValue(final String hashKeyValue) {
+        @Override
+        public Builder hashKeyValue(final Object hashKeyValue) {
             this.hashKeyValue = hashKeyValue;
             return this;
         }
@@ -109,7 +132,8 @@ public final class PrimaryKey {
          * @param rangeKeyName Range Key Name
          * @return Builder
          */
-        public PrimaryKeyBuilder rangeKeyName(final String rangeKeyName) {
+        @Override
+        public Builder rangeKeyName(final String rangeKeyName) {
             this.rangeName = rangeKeyName;
             return this;
         }
@@ -119,7 +143,8 @@ public final class PrimaryKey {
          * @param rangeKeyValue Range Key Value
          * @return Builder
          */
-        public PrimaryKeyBuilder rangeKeyValue(final String rangeKeyValue) {
+        @Override
+        public Builder rangeKeyValue(final Object rangeKeyValue) {
             this.rangeKeyValue = rangeKeyValue;
             return this;
         }
@@ -128,6 +153,7 @@ public final class PrimaryKey {
          *
          * @return Primary Key Object
          */
+        @Override
         public PrimaryKey build() {
             return new PrimaryKey(hashKeyName, hashKeyValue, rangeName, rangeKeyValue);
         }
