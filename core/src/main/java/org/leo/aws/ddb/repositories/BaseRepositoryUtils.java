@@ -184,7 +184,7 @@ enum BaseRepositoryUtils {
 
                 hashKeyValue = (String) hashKeyValueObj;
 
-                queryResponseTuple = getDataFromIndex(indexName, hashKeyValue, Optional.ofNullable(rangeKeyValue), dataClass, filterExpression);
+                queryResponseTuple = getDataFromIndex(indexName, hashKeyValue, rangeKeyValue, dataClass, filterExpression);
 
                 returnedDataFromDb = Flux
                         .from(queryResponseTuple._2())
@@ -479,6 +479,7 @@ enum BaseRepositoryUtils {
     }
 
 
+    @Deprecated
     <ENTITY_TYPE> Tuple<ProjectionType, QueryPublisher> getDataFromIndex(final String indexName,
                                                                                               final String hashKeyValue,
                                                                                               final Optional<?> rangeKeyValue,
@@ -504,6 +505,53 @@ enum BaseRepositoryUtils {
             final Map<String, AttributeValue> attributeValueMap = new HashMap<>();
 
             rangeKeyValue.ifPresent(s -> attributeValueMap.put(":sort_key_val", AttributeValue.builder().s(String.valueOf(s)).build()));
+
+            attributeValueMap.put(":partition_key", AttributeValue.builder().s(hashKeyValue).build());
+
+            builder.tableName(attributeMapper.getTableName());
+            builder.indexName(secondaryIndex.getName());
+
+            setFilterExpression(filterExpressions, builder, nameMap, attributeValueMap);
+
+            builder.keyConditionExpression(keyConditionExpression);
+            builder.expressionAttributeNames(nameMap);
+            builder.expressionAttributeValues(attributeValueMap);
+
+            request = builder.build();
+
+            queryPublisher = DataMapperUtils.getDynamoDbAsyncClient().queryPaginator(request);
+
+            return Tuples.of(secondaryIndex.getProjectionType(), queryPublisher);
+        }
+    }
+
+    <ENTITY_TYPE> Tuple<ProjectionType, QueryPublisher> getDataFromIndex(final String indexName,
+                                                                         final String hashKeyValue,
+                                                                         final Object rangeKeyValue,
+                                                                         final Class<ENTITY_TYPE> dataClass,
+                                                                         final Expr filterExpressions) {
+
+        final AttributeMapper<ENTITY_TYPE> attributeMapper = (AttributeMapper<ENTITY_TYPE>) MapperUtils.getInstance().getAttributeMappingMap()
+                .get(dataClass.getName());
+        final GSI secondaryIndex = attributeMapper.getGlobalSecondaryIndexMap().get(indexName);
+
+        if (secondaryIndex == null) {
+            throw new DbException(MessageFormat.format("Index [{0}] not defined in the data model", indexName));
+        } else if (rangeKeyValue != null && secondaryIndex.getRangeKeyTuple() == null) {
+            throw new DbException(MessageFormat.format("Sort Key not defined for index[{0}] in the data model", indexName));
+        } else {
+            final String keyConditionExpression = "#d = :partition_key" + (rangeKeyValue != null ? (" and " + secondaryIndex.getRangeKeyTuple()._1()
+                    + " = :sort_key_val") : "");
+            final QueryRequest request;
+            final QueryPublisher queryPublisher;
+            final QueryRequest.Builder builder = QueryRequest.builder();
+            final Map<String, String> nameMap = new HashMap<>(software.amazon.awssdk.utils.ImmutableMap.<String, String>builder().put("#d",
+                    secondaryIndex.getHashKeyTuple()._1()).build());
+            final Map<String, AttributeValue> attributeValueMap = new HashMap<>();
+
+            if(rangeKeyValue != null) {
+                attributeValueMap.put(":sort_key_val", AttributeValue.builder().s(String.valueOf(rangeKeyValue)).build());
+            }
 
             attributeValueMap.put(":partition_key", AttributeValue.builder().s(hashKeyValue).build());
 
