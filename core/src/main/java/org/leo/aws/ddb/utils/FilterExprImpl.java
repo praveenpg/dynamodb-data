@@ -79,7 +79,7 @@ class FilterExprImpl implements FilterExpr {
         }
     }
 
-    public static class NameImpl implements Name {
+    private static class NameImpl implements Name {
         private final String name;
         private final String alias;
         private final FilterExprImpl filterExpression;
