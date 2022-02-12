@@ -22,7 +22,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 import java.util.Map;
 
 @Configuration
-@ConditionalOnClass({DynamoDbRepository.class, BlockingBaseRepository.class})
+@ConditionalOnClass({DynamoDbRepository.class})
 @EnableConfigurationProperties({AwsEnvironmentProperties.class, DynamoDbProperties.class})
 @Import(DataMapperConfig.class)
 public class DdbAutoConfiguration {
