@@ -84,7 +84,7 @@ enum BaseRepositoryUtils {
             if (versionFieldType == Integer.class) {
                 ReflectionUtils.setField(versionedAttribute._1(), item, version);
             } else {
-                ReflectionUtils.setField(versionedAttribute._1(), item, new Long(version));
+                ReflectionUtils.setField(versionedAttribute._1(), item, Long.valueOf(version));
             }
         } else {
             version = null;
@@ -478,6 +478,7 @@ enum BaseRepositoryUtils {
     }
 
 
+    @SuppressWarnings({"DuplicatedCode", "OptionalUsedAsFieldOrParameterType"})
     @Deprecated
     <ENTITY_TYPE> Tuple<ProjectionType, QueryPublisher> getDataFromIndex(final String indexName,
                                                                          final String hashKeyValue,
@@ -524,6 +525,7 @@ enum BaseRepositoryUtils {
         }
     }
 
+    @SuppressWarnings("DuplicatedCode")
     <ENTITY_TYPE> Tuple<ProjectionType, QueryPublisher> getDataFromIndex(final String indexName,
                                                                          final String hashKeyValue,
                                                                          final Object rangeKeyValue,
