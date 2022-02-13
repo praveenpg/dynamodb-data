@@ -11,7 +11,6 @@ import org.leo.aws.ddb.model.PrimaryKey;
 import org.leo.aws.ddb.model.UpdateItem;
 import org.leo.aws.ddb.utils.*;
 import org.leo.aws.ddb.utils.exceptions.Issue;
-import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.Nullable;
@@ -481,10 +480,10 @@ enum BaseRepositoryUtils {
 
     @Deprecated
     <ENTITY_TYPE> Tuple<ProjectionType, QueryPublisher> getDataFromIndex(final String indexName,
-                                                                                              final String hashKeyValue,
-                                                                                              final Optional<?> rangeKeyValue,
-                                                                                              final Class<ENTITY_TYPE> dataClass,
-                                                                                              final Expr filterExpressions) {
+                                                                         final String hashKeyValue,
+                                                                         final Optional<?> rangeKeyValue,
+                                                                         final Class<ENTITY_TYPE> dataClass,
+                                                                         final Expr filterExpressions) {
 
         final AttributeMapper<ENTITY_TYPE> attributeMapper = (AttributeMapper<ENTITY_TYPE>) MapperUtils.getInstance().getAttributeMappingMap()
                 .get(dataClass.getName());
@@ -549,7 +548,7 @@ enum BaseRepositoryUtils {
                     secondaryIndex.getHashKeyTuple()._1()).build());
             final Map<String, AttributeValue> attributeValueMap = new HashMap<>();
 
-            if(rangeKeyValue != null) {
+            if (rangeKeyValue != null) {
                 attributeValueMap.put(":sort_key_val", AttributeValue.builder().s(String.valueOf(rangeKeyValue)).build());
             }
 
@@ -592,8 +591,8 @@ enum BaseRepositoryUtils {
         }
     }
 
-    <ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> Class<ENTITY_TYPE> getRepoParameterType(
-            final AbstractDynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> baseRepository) {
+    <ENTITY_TYPE> Class<ENTITY_TYPE> getRepoParameterType(
+            final DynamoDbRepository<ENTITY_TYPE> baseRepository) {
 
         return (Class<ENTITY_TYPE>) repoParameterTypeMap.computeIfAbsent(baseRepository.getClass().getName(), s -> {
             final DdbRepository annotation = baseRepository.getClass().getAnnotation(DdbRepository.class);
@@ -678,34 +677,6 @@ enum BaseRepositoryUtils {
                     .map(dataMapper::mapFromValue);
         } else {
             throw new DbException("Currently only String/Number types are supported for hashKey Values");
-        }
-    }
-
-    <ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> SINGLE_RECORD_TYPE processRepositoryResponseForSingleRecord(
-            final Mono<ENTITY_TYPE> returnedRecord,
-            final AbstractDynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> repo) {
-
-        return processRepositoryResult(returnedRecord, repo, record -> (SINGLE_RECORD_TYPE) ((Mono<ENTITY_TYPE>) record).block());
-    }
-
-    <ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> MULTI_RECORD_TYPE processRepositoryResponseForMultipleRecords(
-            final Flux<ENTITY_TYPE> returnedRecords,
-            final AbstractDynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> repo) {
-
-        return processRepositoryResult(returnedRecords, repo, records -> (MULTI_RECORD_TYPE) ((Flux<ENTITY_TYPE>) records).collectList().block());
-    }
-
-    private <ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE, RETURN_TYPE> RETURN_TYPE processRepositoryResult(
-            final Publisher<ENTITY_TYPE> data,
-            final AbstractDynamoDbRepository<ENTITY_TYPE, SINGLE_RECORD_TYPE, MULTI_RECORD_TYPE> repo,
-            final Func1<Publisher<ENTITY_TYPE>, RETURN_TYPE> func) {
-
-        if (repo instanceof BlockingBaseRepository) {
-            return func.call(data);
-        } else if (repo instanceof DynamoDbRepository) {
-            return (RETURN_TYPE) data;
-        } else {
-            throw new DbException("Repository should either implement BlockingBaseRepository or NonBlockingBaseRepository");
         }
     }
 }
