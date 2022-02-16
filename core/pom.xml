@@ -15,6 +15,10 @@
     <packaging>jar</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
+    <properties>
+        <encoding>UTF-8</encoding>
+    </properties>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -111,8 +115,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <forceJavacCompilerUse>true</forceJavacCompilerUse>
+                    <release>11</release>
                 </configuration>
             </plugin>
 
@@ -158,6 +162,25 @@
                 </executions>
             </plugin>-->
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>aspectj-maven-plugin</artifactId>
+                <version>1.14.0</version>
+                <configuration>
+                    <complianceLevel>11</complianceLevel>
+                    <showWeaveInfo>true</showWeaveInfo>
+                    <encoding>${encoding}</encoding>
+                    <Xlint>ignore</Xlint>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>test-compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <version>3.2.1</version>
@@ -177,7 +200,7 @@
                 <configuration>
                     <show>private</show>
                     <nohelp>true</nohelp>
-                    <source>8</source>
+                    <source>11</source>
                 </configuration>
                 <executions>
                     <execution>
