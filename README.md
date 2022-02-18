@@ -6,7 +6,7 @@ An Object model (almost) for dynamoDb
   This project attempts to develop an Object model for AWS DynamoDB database based systems. Entities are developed as POJOs with annotations as shown in the examples below.
 - GIT URL: <https://github.com/praveenpg/dynamodb-data>
 ## Requirements
-- Java 8
+- Java 11
 - Maven
 
 ## Amazon Services Covered
@@ -54,10 +54,10 @@ org:
 @AllArgsConstructor //Lombok annotation
 public class UserInfo {
     @PK(type = PK.Type.HASH_KEY)
-    @GlobalSecondaryIndex(name = "division-emailAddress-index", type = PK.Type.RANGE_KEY, projectionType = GlobalSecondaryIndex.ProjectionType.KEYS_ONLY)
+    @Index(name = "division-emailAddress-index", type = KeyType.RANGE_KEY, projectionType = ProjectionType.KEYS_ONLY)
     private String emailAddress;
     @PK(type = PK.Type.RANGE_KEY)
-    @GlobalSecondaryIndex(name = "division-emailAddress-index", type = PK.Type.HASH_KEY, projectionType = GlobalSecondaryIndex.ProjectionType.KEYS_ONLY)
+    @Index(name = "division-emailAddress-index", type = KeyType.HASH_KEY, projectionType = ProjectionType.KEYS_ONLY)
     private String division;
     private String firstName;
     private String lastName;
@@ -67,7 +67,6 @@ public class UserInfo {
 ```
 - Add a repository class. The repository class needs to implement the BaseRepository interface.
 - Querying by Hash Key and Range Key
-- Non Blocking DAO (Preferred)
 ```java
 @DdbRepository(entityClass = UserInfo.class)
 public class UserInfoRepository implements NonBlockingBaseRepository<UserInfo> {
@@ -78,20 +77,9 @@ public class UserInfoRepository implements NonBlockingBaseRepository<UserInfo> {
         return findByGlobalSecondaryIndex("division-emailAddress-index", division);
     }
 }
-```
-- Blocking DAO
-```java
-public class UserInfoRepository implements BlockingBaseRepository<UserInfo> {
-    public List<UserInfo> getByEmailAddress(String emailAddress) {
-        return findByHashKey("emailAddress", emailAddress);
-    }
-    public List<UserInfo> getByDivision(final String division) {
-        return findByGlobalSecondaryIndex("division-emailAddress-index", division);
-    }
-}
+
 ```
 - Querying by Hash key and range key
-- Non Blocking (Preferred)
 ```java
 class UserService {
 @Autowired
@@ -107,41 +95,14 @@ private UserInfoRepository userInfoRepository;
     }
 }
 ```
-- Blocking
-```java
-class UserService {
-@Autowired
-private UserInfoRepository userInfoRepository;
 
-    public UserInfo findByEmailAddressAndDivision(final String emailAddress, final String division) {
-        return userInfoRepository.findByPrimaryKey(PrimaryKey.builder()
-                                                .hashKeyName(userInfoRepository.getHashKeyName())
-                                                .hashKeyValue(emailAddress)
-                                                .rangeKeyName(userInfoRepository.getRangeKeyName())
-                                                .rangeKeyValue(division)
-                                                .build());
-    }
-}
-```
 - Querying by index
-- Non Blocking (Preferred)
 ```java
 class UserService {
     @Autowired
     private UserInfoRepository userInfoRepository;
     
     public Flux<UserInfo> findByDivision(final String division) {
-        return userInfoRepository.findByGlobalSecondaryIndex("division-emailAddress-index", division);
-    }
-}
-```
-- Blocking
-```java
-class UserService {
-    @Autowired
-    private UserInfoRepository userInfoRepository;
-    
-    public List<UserInfo> findByDivision(final String division) {
         return userInfoRepository.findByGlobalSecondaryIndex("division-emailAddress-index", division);
     }
 }
