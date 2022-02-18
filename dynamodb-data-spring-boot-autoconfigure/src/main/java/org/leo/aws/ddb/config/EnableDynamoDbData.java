@@ -11,5 +11,5 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Import({DdbAutoConfiguration.class})
-public @interface EnableDynamoDb {
+public @interface EnableDynamoDbData {
 }
