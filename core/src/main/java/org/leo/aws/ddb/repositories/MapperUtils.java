@@ -150,8 +150,8 @@ public enum MapperUtils {
                 a instanceof Transient ||
                 a instanceof HashKey ||
                 a instanceof RangeKey ||
-                a instanceof Index ||
-                a instanceof Indices ||
+                a instanceof SecondaryIndex ||
+                a instanceof SecondaryIndices ||
                 a instanceof DateUpdated) ||
                 a instanceof DateCreated ||
                 a instanceof VersionAttribute).collect(Collectors.toList());
@@ -168,14 +168,14 @@ public enum MapperUtils {
                         (HashKey) annotations.stream().filter(a -> (a instanceof HashKey)).findAny().orElse(null) : null;
                 final RangeKey rangeKey = !CollectionUtils.isEmpty(annotations) ?
                         (RangeKey) annotations.stream().filter(a -> (a instanceof RangeKey)).findAny().orElse(null) : null;
-                final Index gsiElement = !CollectionUtils.isEmpty(annotations) ?
-                        (Index) annotations.stream().filter(a -> (a instanceof Index)).findAny().orElse(null) : null;
-                final Indices gsis = !CollectionUtils.isEmpty(annotations) ?
-                        (Indices) annotations.stream().filter(a -> (a instanceof Indices)).findAny().orElse(null) : null;
+                final SecondaryIndex gsiElement = !CollectionUtils.isEmpty(annotations) ?
+                        (SecondaryIndex) annotations.stream().filter(a -> (a instanceof SecondaryIndex)).findAny().orElse(null) : null;
+                final SecondaryIndices gsis = !CollectionUtils.isEmpty(annotations) ?
+                        (SecondaryIndices) annotations.stream().filter(a -> (a instanceof SecondaryIndices)).findAny().orElse(null) : null;
                 final VersionAttribute versionAttribute = !CollectionUtils.isEmpty(annotations) ?
                         (VersionAttribute) annotations.stream().filter(a -> (a instanceof VersionAttribute)).findAny().orElse(null) : null;
                 final String fieldName = DbAttribute != null ? DbAttribute.value() : field.getName();
-                final List<Index> gsiList;
+                final List<SecondaryIndex> gsiList;
                 final String fieldNameVal;
                 final Class<?> fieldClass = field.getType();
 

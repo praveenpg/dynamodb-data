@@ -47,17 +47,17 @@ org:
       aws-access-key: <access_key>
       aws-access-key-secret: <secret>
 ```
-- Create an entity class with the following annotation
+- Create an entity class with the following annotation. All entity classes should have an empty constructor. It can be private.
 ```java
 @DDBTable(name = "ddb-demo-user-info")
 @Data //Lombok annotation (Optional)
 @AllArgsConstructor //Lombok annotation (Optional)
 public class UserInfo {
     @HashKey
-    @Index(name = "division-emailAddress-index", type = KeyType.RANGE_KEY, projectionType = ProjectionType.KEYS_ONLY)
+    @SecondaryIndex(name = "division-emailAddress-index", type = KeyType.RANGE_KEY, projectionType = ProjectionType.KEYS_ONLY)
     private String emailAddress;
     @RangeKey
-    @Index(name = "division-emailAddress-index", type = KeyType.HASH_KEY, projectionType = ProjectionType.KEYS_ONLY)
+    @SecondaryIndex(name = "division-emailAddress-index", type = KeyType.HASH_KEY, projectionType = ProjectionType.KEYS_ONLY)
     private String division;
     private String firstName;
     private String lastName;

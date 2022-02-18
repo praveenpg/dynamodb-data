@@ -9,10 +9,10 @@ import java.lang.annotation.*;
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface Indices {
+public @interface SecondaryIndices {
     /**
      * Individual Indexes
      * @return indexes
      */
-    Index[] indices();
+    SecondaryIndex[] indices();
 }
