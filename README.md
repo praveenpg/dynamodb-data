@@ -50,8 +50,8 @@ org:
 - Create an entity class with the following annotation
 ```java
 @DDBTable(name = "ddb-demo-user-info")
-@Data //Lombok annotation
-@AllArgsConstructor //Lombok annotation
+@Data //Lombok annotation (Optional)
+@AllArgsConstructor //Lombok annotation (Optional)
 public class UserInfo {
     @HashKey
     @Index(name = "division-emailAddress-index", type = KeyType.RANGE_KEY, projectionType = ProjectionType.KEYS_ONLY)
