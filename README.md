@@ -53,10 +53,10 @@ org:
 @Data //Lombok annotation
 @AllArgsConstructor //Lombok annotation
 public class UserInfo {
-    @PK(type = PK.Type.HASH_KEY)
+    @HashKey
     @Index(name = "division-emailAddress-index", type = KeyType.RANGE_KEY, projectionType = ProjectionType.KEYS_ONLY)
     private String emailAddress;
-    @PK(type = PK.Type.RANGE_KEY)
+    @RangeKey
     @Index(name = "division-emailAddress-index", type = KeyType.HASH_KEY, projectionType = ProjectionType.KEYS_ONLY)
     private String division;
     private String firstName;

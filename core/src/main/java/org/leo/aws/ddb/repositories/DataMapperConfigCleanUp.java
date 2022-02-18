@@ -30,19 +30,21 @@ public class DataMapperConfigCleanUp {
                 ClasspathHelper.staticClassLoader())));
         final Set<Class<?>> annotated = reflections.getTypesAnnotatedWith(DDBTable.class);
 
-        annotated.forEach(a -> {
-            final DataMapper dataMapper = dataMapperMap.get(a);
-
-            if(dataMapper == null) {
-                dataMapperMap.put(a, new AbstractDataMapper() {
-                    @Override
-                    public Class getParameterType() {
-                        return a;
-                    }
-                });
-            }
-        });
+        annotated.forEach(this::setParameterTypeInDataMapperMap);
 
         dataMapperMap.forEach((key, value) -> MapperUtils.INSTANCE.setDbAttributes(value.getParameterType(), environment, value));
+    }
+
+    private void setParameterTypeInDataMapperMap(final Class<?> type) {
+        final DataMapper dataMapper = dataMapperMap.get(type);
+
+        if(dataMapper == null) {
+            dataMapperMap.put(type, new AbstractDataMapper() {
+                @Override
+                public Class getParameterType() {
+                    return type;
+                }
+            });
+        }
     }
 }

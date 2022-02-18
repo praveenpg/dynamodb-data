@@ -53,28 +53,28 @@ public class DdbAutoConfiguration {
         return DynamoDbAsyncClient.builder().region(Region.of(dynamoDbProperties.getRegion())).build();
     }
 
-    @Bean(name = "entityValidationConfig1")
+    @Bean(name = "entityValidationConfigMain")
     @ConditionalOnProperty(prefix = "org.leo.aws.ddb", value = "entity-base-package")
-    public EntityValidationConfig entityValidationConfig1(final DynamoDbProperties dynamoDbProperties) {
+    public EntityValidationConfig entityValidationConfigMain(final DynamoDbProperties dynamoDbProperties) {
         return new EntityValidationConfig(dynamoDbProperties.getEntityBasePackage());
     }
 
     //TODO For backward compatibility. Remove later
-    @Bean(name = "entityValidationConfig")
-    @ConditionalOnMissingBean(name = "entityValidationConfig1")
-    public EntityValidationConfig entityValidationConfig() {
+    @Bean(name = "entityValidationConfigTmp")
+    @ConditionalOnMissingBean(name = "entityValidationConfigMain")
+    public EntityValidationConfig entityValidationConfigTmp() {
         return new EntityValidationConfig(dtoBasePackage);
     }
 
-    @Bean(name = "dataMapperConfigCleanUp1")
+    @Bean(name = "dataMapperConfigCleanUpMain")
     @ConditionalOnProperty(prefix = "org.leo.aws.ddb", value = "entity-base-package")
-    public DataMapperConfigCleanUp dataMapperConfigCleanUp1(final DynamoDbProperties dynamoDbProperties, final Map<Class, DataMapper> dataMapperMap, final Environment environment) {
+    public DataMapperConfigCleanUp dataMapperConfigCleanUpMain(final DynamoDbProperties dynamoDbProperties, final Map<Class, DataMapper> dataMapperMap, final Environment environment) {
         return new DataMapperConfigCleanUp(dynamoDbProperties.getEntityBasePackage(), dataMapperMap, environment);
     }
 
     @Bean(name = "dataMapperConfigCleanUp")
-    @ConditionalOnMissingBean(name = {"dataMapperConfigCleanUp1", "entityValidationConfig1"})
-    public DataMapperConfigCleanUp dataMapperConfigCleanUp(final Map<Class, DataMapper> dataMapperMap, final Environment environment) {
+    @ConditionalOnMissingBean(name = {"dataMapperConfigCleanUpMain", "entityValidationConfigMain"})
+    public DataMapperConfigCleanUp dataMapperConfigCleanUpTmp(final Map<Class, DataMapper> dataMapperMap, final Environment environment) {
         return new DataMapperConfigCleanUp(dtoBasePackage, dataMapperMap, environment);
     }
 }
