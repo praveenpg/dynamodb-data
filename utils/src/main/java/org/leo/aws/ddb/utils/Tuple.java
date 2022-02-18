@@ -1,7 +1,6 @@
 package org.leo.aws.ddb.utils;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
 
@@ -40,7 +39,7 @@ public final class Tuple<A, B> implements ITuple {
     }
 
     public Iterable<?> toIterable() {
-        return Collections.unmodifiableList(Arrays.asList(first, second));
+        return List.of(first, second);
     }
 
     @Override

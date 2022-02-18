@@ -1,7 +1,6 @@
 package org.leo.aws.ddb.utils;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 @SuppressWarnings("WeakerAccess")
@@ -31,7 +30,7 @@ public final class Tuple3<A, B, C>  implements ITuple {
     }
 
     public Iterable<?> toIterable() {
-        return Collections.unmodifiableList(Arrays.asList(_1(), _2(), _3()));
+        return List.of(_1(), _2(), _3());
     }
 
     public static <A, B, C> Tuple3<A, B, C> of(final A first, final B second, final C third) {

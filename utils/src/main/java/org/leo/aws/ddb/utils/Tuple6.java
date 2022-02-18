@@ -1,7 +1,6 @@
 package org.leo.aws.ddb.utils;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 @SuppressWarnings("unused")
@@ -43,7 +42,7 @@ public final class Tuple6<A, B, C, D, E, F> implements ITuple {
     }
 
     public Iterable<?> toIterable() {
-        return Collections.unmodifiableList(Arrays.asList(_1(), _2(), _3(), _4(), _5(), _6()));
+        return List.of(_1(), _2(), _3(), _4(), _5(), _6());
     }
 
     @Override
