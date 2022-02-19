@@ -13,11 +13,13 @@ An Object model (almost) for dynamoDb
 - DynamoDB (https://aws.amazon.com/dynamodb/)
 
 ## Getting Started
+#### Maven Dependency
+
 ```xml
         <dependency>
             <groupId>net.leodb.dynamodb</groupId>
             <artifactId>starter</artifactId>
-            <version>1.0.0-20200802.053730-1</version>
+            <version>1.0.1</version>
         </dependency>
 ```
 Add the following to dependencyManagement
@@ -27,7 +29,7 @@ Add the following to dependencyManagement
             <dependency>
                 <groupId>software.amazon.awssdk</groupId>
                 <artifactId>bom</artifactId>
-                <version>2.13.8</version>
+                <version>2.17.132</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
