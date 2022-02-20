@@ -84,8 +84,8 @@ public enum MapperUtils {
                 throw new DbException("Entity cannot have more than one version attribute");
             }
 
-            if(CollectionUtils.isEmpty(primaryKeyMapping)) {
-                throw new DbException("Entity class should have at least a hashKey defined");
+            if(CollectionUtils.isEmpty(primaryKeyMapping) || primaryKeyMapping.get(KeyType.HASH_KEY) == null) {
+                throw new DbException("Entity class should have a hashKey defined");
             }
 
             attributeMappingMap.put(dataClass.getName(), builder.mappedClass(dataClass)
