@@ -297,8 +297,8 @@ public interface DynamoDbRepository<ENTITY_TYPE> {
      * @param hashKeyValueObj hash key value
      * @return list of items satisfying the above criteria
      */
-    default Flux<ENTITY_TYPE> findByGlobalSecondaryIndex(final String indexName, final Object hashKeyValueObj) {
-        return findByGlobalSecondaryIndex(indexName, hashKeyValueObj, null);
+    default Flux<ENTITY_TYPE> findBySecondaryIndex(final String indexName, final Object hashKeyValueObj) {
+        return findBySecondaryIndex(indexName, hashKeyValueObj, null);
     }
 
     /**
@@ -307,10 +307,10 @@ public interface DynamoDbRepository<ENTITY_TYPE> {
      * @param rangeKeyValue   range key value
      * @return list of items satisfying the above criteria
      */
-    default Flux<ENTITY_TYPE> findByGlobalSecondaryIndex(@NonNull final String indexName,
-                                                         final Object hashKeyValueObj,
-                                                         final Object rangeKeyValue) {
-        return findByGlobalSecondaryIndex(indexName, hashKeyValueObj, rangeKeyValue, null);
+    default Flux<ENTITY_TYPE> findBySecondaryIndex(@NonNull final String indexName,
+                                                   final Object hashKeyValueObj,
+                                                   final Object rangeKeyValue) {
+        return findBySecondaryIndex(indexName, hashKeyValueObj, rangeKeyValue, null);
     }
 
 
@@ -320,11 +320,11 @@ public interface DynamoDbRepository<ENTITY_TYPE> {
      * @param expr            Filter Expression
      * @return Multiple records
      */
-    default Flux<ENTITY_TYPE> findByGlobalSecondaryIndex(@NonNull final String indexName,
-                                                         final Object hashKeyValueObj,
-                                                         @Nullable final Expr expr) {
+    default Flux<ENTITY_TYPE> findBySecondaryIndex(@NonNull final String indexName,
+                                                   final Object hashKeyValueObj,
+                                                   @Nullable final Expr expr) {
 
-        return findByGlobalSecondaryIndex(indexName, hashKeyValueObj, null, expr);
+        return findBySecondaryIndex(indexName, hashKeyValueObj, null, expr);
     }
 
     /**
@@ -334,10 +334,10 @@ public interface DynamoDbRepository<ENTITY_TYPE> {
      * @param expr            Filter Expression
      * @return Multiple records
      */
-    default Flux<ENTITY_TYPE> findByGlobalSecondaryIndex(@NonNull final String indexName,
-                                                         final Object hashKeyValueObj,
-                                                         final Object rangeKeyValue,
-                                                         @Nullable final Expr expr) {
+    default Flux<ENTITY_TYPE> findBySecondaryIndex(@NonNull final String indexName,
+                                                   final Object hashKeyValueObj,
+                                                   final Object rangeKeyValue,
+                                                   @Nullable final Expr expr) {
 
         return BaseRepositoryUtils.getInstance().findByGlobalSecondaryIndex(indexName,
                 hashKeyValueObj,
