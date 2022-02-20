@@ -4,7 +4,7 @@ package org.leo.aws.ddb.repositories;
 import org.leo.aws.ddb.annotations.DbAttribute;
 import org.leo.aws.ddb.annotations.KeyType;
 import org.leo.aws.ddb.exceptions.DbException;
-import org.leo.aws.ddb.model.PrimaryKey;
+import org.leo.aws.ddb.data.PrimaryKey;
 import org.leo.aws.ddb.utils.DbUtils;
 import org.leo.aws.ddb.utils.Tuple;
 import org.leo.aws.ddb.utils.Tuple4;

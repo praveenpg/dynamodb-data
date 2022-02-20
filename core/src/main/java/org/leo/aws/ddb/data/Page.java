@@ -1,4 +1,4 @@
-package org.leo.aws.ddb.model;
+package org.leo.aws.ddb.data;
 
 public class Page {
     private final int pageSize;

@@ -3,7 +3,7 @@ package org.leo.aws.ddb.repositories;
 import com.google.common.collect.ImmutableList;
 import org.leo.aws.ddb.annotations.*;
 import org.leo.aws.ddb.exceptions.DbException;
-import org.leo.aws.ddb.model.VersionedEntity;
+import org.leo.aws.ddb.data.VersionedEntity;
 import org.leo.aws.ddb.utils.*;
 import org.leo.aws.ddb.utils.exceptions.Issue;
 import org.leo.aws.ddb.utils.exceptions.UtilsException;

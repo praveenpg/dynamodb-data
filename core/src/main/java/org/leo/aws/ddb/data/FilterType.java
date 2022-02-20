@@ -1,4 +1,4 @@
-package org.leo.aws.ddb.model;
+package org.leo.aws.ddb.data;
 
 public enum FilterType {
     ATTRIBUTE_NOT_EXIST
