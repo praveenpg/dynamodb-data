@@ -10,3 +10,7 @@ dynamodb-data.iml
 /dynamodb-data-spring-boot-autoconfigure/target
 /dynamodb-data-spring-boot-starter/target
 /dynamodb-data-spring-boot-starter/starter.iml
+/*.versionsBackup
+/core/*.versionsBackup
+/dynamodb-data-spring-boot-autoconfigure/*.versionsBackup
+/dynamodb-data-spring-boot-starter/*.versionsBackup
