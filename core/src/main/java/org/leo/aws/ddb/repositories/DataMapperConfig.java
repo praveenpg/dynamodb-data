@@ -32,6 +32,8 @@ public class DataMapperConfig {
             final Map<String, DataMapper> beans = applicationContext.getBeansOfType(DataMapper.class);
             final Method method = ApplicationContextUtils.class.getDeclaredMethod("init", ApplicationContext.class, Environment.class);
 
+            method.setAccessible(true);
+
             method.invoke(null, applicationContext, environment);
 
             return new HashMap<>(beans.values().stream()
