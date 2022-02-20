@@ -85,7 +85,7 @@ public enum MapperUtils {
             }
 
             if(CollectionUtils.isEmpty(primaryKeyMapping) || primaryKeyMapping.get(KeyType.HASH_KEY) == null) {
-                throw new DbException("Entity class should have a hashKey defined");
+                throw new DbException(String.format("Entity class %s does not have a hash key defined", dataClass.getName()));
             }
 
             attributeMappingMap.put(dataClass.getName(), builder.mappedClass(dataClass)
