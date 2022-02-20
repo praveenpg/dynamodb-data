@@ -66,7 +66,7 @@ public enum MapperUtils {
             final Map<String, Tuple<Field, DbAttribute>> map = new HashMap<>();
             final Map<KeyType, Tuple<String, Field>> primaryKeyMapping = new HashMap<>();
             final Map<String, Tuple<Field, DbAttribute>> versionAttMap = new HashMap<>();
-            final ConcurrentHashMap<String, GSI.Builder> IndexMap = new ConcurrentHashMap<>();
+            final ConcurrentHashMap<String, GSI.Builder> indexMap = new ConcurrentHashMap<>();
             final AttributeMapper.Builder<T> builder;
 
             if (table != null) {
@@ -77,7 +77,7 @@ public enum MapperUtils {
 
             builder = AttributeMapper.builder();
 
-            fields.forEach(field -> setFieldMappings(map, primaryKeyMapping, field, IndexMap,
+            fields.forEach(field -> setFieldMappings(map, primaryKeyMapping, field, indexMap,
                     versionAttMap, builder));
 
             if (!CollectionUtils.isEmpty(versionAttMap) && versionAttMap.size() > 1) {
@@ -92,7 +92,7 @@ public enum MapperUtils {
                     .mappedFields(map)
                     .constructor(constructor)
                     .primaryKeyMapping(primaryKeyMapping)
-                    .globalSecondaryIndexMap(IndexMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, b -> b.getValue().build())))
+                    .globalSecondaryIndexMap(indexMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, b -> b.getValue().build())))
                     .versionAttributeField(!CollectionUtils.isEmpty(versionAttMap) ? versionAttMap.entrySet().iterator().next().getValue() : null)
                     .tableName(tableName)
                     .build());
