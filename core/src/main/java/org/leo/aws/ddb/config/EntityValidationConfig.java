@@ -20,7 +20,6 @@ public class EntityValidationConfig {
         this.dtoBasePackage = dtoBasePackage;
     }
 
-    @SuppressWarnings("ConstantConditions")
     @PostConstruct
     public void validateEntities() {
         final Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage(
@@ -28,18 +27,21 @@ public class EntityValidationConfig {
                 ClasspathHelper.staticClassLoader())));
         final Set<Class<?>> entityClasses = reflections.getTypesAnnotatedWith(DDBTable.class);
 
-        entityClasses.forEach(entityClass -> {
-            try {
-                final Constructor<?> constructor = entityClass.getDeclaredConstructor();
+        entityClasses.forEach(this::validateEntityClass);
+    }
 
-                if(constructor == null) {
-                    throw new NoSuchMethodException();
-                }
-            } catch (final NoSuchMethodException e) {
-                throw new DbException(MessageFormat.format(
-                        "Entity [{0}] does not have a default constructor. All entities should have at least one default no-args constructor",
-                        entityClass.getName()));
+    @SuppressWarnings("ConstantConditions")
+    private void validateEntityClass(Class<?> entityClass) {
+        try {
+            final Constructor<?> constructor = entityClass.getDeclaredConstructor();
+
+            if(constructor == null) {
+                throw new NoSuchMethodException();
             }
-        });
+        } catch (final NoSuchMethodException e) {
+            throw new DbException(MessageFormat.format(
+                    "Entity [{0}] does not have a default constructor. All entities should have at least one default no-args constructor",
+                    entityClass.getName()));
+        }
     }
 }
