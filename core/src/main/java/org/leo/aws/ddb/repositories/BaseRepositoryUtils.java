@@ -157,7 +157,7 @@ enum BaseRepositoryUtils {
                             .attributeUpdates(mappedUpdateValues)
                             .returnValues(ReturnValue.ALL_NEW)
                             .build())
-                    .thenApplyAsync(updateItemResponse -> dataMapper.mapFromValue(updateItemResponse.attributes())));
+                    .thenApplyAsync(updateItemResponse -> dataMapper.mapFromAttributeValueToEntity(updateItemResponse.attributes())));
         });
     }
 
@@ -188,7 +188,7 @@ enum BaseRepositoryUtils {
                 returnedDataFromDb = Flux
                         .from(queryResponseTuple._2())
                         .flatMapIterable(QueryResponse::items)
-                        .map(a -> DataMapperUtils.getDataMapper(dataClass).mapFromValue(a));
+                        .map(a -> DataMapperUtils.getDataMapper(dataClass).mapFromAttributeValueToEntity(a));
 
                 if (queryResponseTuple._1() == ProjectionType.ALL) {
                     returnData = returnedDataFromDb;
@@ -242,7 +242,7 @@ enum BaseRepositoryUtils {
 
         return Flux.from(scanPublisher)
                 .flatMapIterable(ScanResponse::items)
-                .map(dataMapper::mapFromValue);
+                .map(dataMapper::mapFromAttributeValueToEntity);
     }
 
     <ENTITY_TYPE> Mono<ENTITY_TYPE> findByPrimaryKey(final PrimaryKey primaryKey,
@@ -256,7 +256,7 @@ enum BaseRepositoryUtils {
 
             return Mono
                     .fromCompletionStage(DataMapperUtils.getDynamoDbAsyncClient().getItem(getItemRequest))
-                    .flatMap(resp -> resp.item().isEmpty() ? Mono.empty() : Mono.just(dataMapper.mapFromValue(resp.item())));
+                    .flatMap(resp -> resp.item().isEmpty() ? Mono.empty() : Mono.just(dataMapper.mapFromAttributeValueToEntity(resp.item())));
         });
     }
 
@@ -278,7 +278,7 @@ enum BaseRepositoryUtils {
             return Flux
                     .from(DataMapperUtils.getDynamoDbAsyncClient().batchGetItemPaginator(request))
                     .flatMapIterable(resp -> resp.responses().get(dataMapper.tableName()))
-                    .map(dataMapper::mapFromValue);
+                    .map(dataMapper::mapFromAttributeValueToEntity);
         });
     }
 
@@ -330,7 +330,7 @@ enum BaseRepositoryUtils {
             }
         }
 
-        attributeValues = dataMapper.mapToValue(item);
+        attributeValues = dataMapper.mapFromEntityToAttributeValue(item);
 
         ttlAction.call(item, attributeValues);
 
@@ -385,7 +385,7 @@ enum BaseRepositoryUtils {
                                     .returnValues(ReturnValue.ALL_NEW)
                                     .build())
                             .exceptionally(e -> handleUpdateItemException(primaryKey, dataMapper.tableName(), e))
-                            .thenApplyAsync(updateItemResponse -> dataMapper.mapFromValue(updateItemResponse.attributes())))
+                            .thenApplyAsync(updateItemResponse -> dataMapper.mapFromAttributeValueToEntity(updateItemResponse.attributes())))
                     .onErrorResume(throwable -> throwable instanceof CompletionException, throwable -> Mono.error(throwable.getCause()));
         });
     }
@@ -423,7 +423,7 @@ enum BaseRepositoryUtils {
         return Flux.defer(() -> {
             final Func1<DataMapper<ENTITY_TYPE>, Stream<WriteRequest>> putFunc = dataMapper -> putItems.stream().map(item -> WriteRequest.builder()
                     .putRequest(PutRequest.builder()
-                            .item(dataMapper.mapToValue(item))
+                            .item(dataMapper.mapFromEntityToAttributeValue(item))
                             .build())
                     .build());
             final Func1<DataMapper<ENTITY_TYPE>, Stream<WriteRequest>> deleteFunc = dataMapper ->
@@ -676,7 +676,7 @@ enum BaseRepositoryUtils {
 
             return Flux.from(queryResponse)
                     .flatMapIterable(QueryResponse::items)
-                    .map(dataMapper::mapFromValue);
+                    .map(dataMapper::mapFromAttributeValueToEntity);
         } else {
             throw new DbException("Currently only String/Number types are supported for hashKey Values");
         }

@@ -34,13 +34,15 @@ interface DataMapper<T> {
      * @return The entity object representing the attribute value passed.
      */
     @SuppressWarnings("unchecked")
-    default T mapFromValue(final Map<String, AttributeValue> attributeValues) {
+    default T mapFromAttributeValueToEntity(final Map<String, AttributeValue> attributeValues) {
         final AttributeMapper<T> fieldMapping = (AttributeMapper<T>) MapperUtils.getInstance().getAttributeMappingMap().get(getParameterType().getName());
         final Constructor<T> constructor = fieldMapping.getConstructor();
         final T mappedObject = Utils.constructObject(constructor);
         final Map<String, Tuple<Field, DbAttribute>> fieldMap = fieldMapping.getMappedFields();
 
-        attributeValues.entrySet().stream()
+        attributeValues
+                .entrySet()
+                .stream()
                 .filter(a -> (fieldMap.get(a.getKey()) != null))
                 .forEach(entry -> ReflectionUtils.setField(fieldMap.get(entry.getKey())._1(), mappedObject,
                         DbUtils.attributeToModel(fieldMap.get(entry.getKey())._1()).call(entry.getValue())));
@@ -54,17 +56,15 @@ interface DataMapper<T> {
      * @return Attribute name to value mapping.
      */
     @SuppressWarnings("unchecked")
-    default Map<String, AttributeValue> mapToValue(final T input) {
+    default Map<String, AttributeValue> mapFromEntityToAttributeValue(final T input) {
         final AttributeMapper<T> fieldMapping = (AttributeMapper<T>) MapperUtils.getInstance().getAttributeMappingMap().get(getParameterType().getName());
         final Map<String, Tuple<Field, DbAttribute>> fieldMap = fieldMapping.getMappedFields();
 
-        final Map<String, AttributeValue> ret = fieldMapping.getMappedFields().keySet().stream()
+        return fieldMapping.getMappedFields().keySet().stream()
                 .map(key -> Tuples.of(key, ReflectionUtils.getField(fieldMap.get(key)._1(), input)))
                 .filter(a -> a._2() != null)
                 .map(t -> Tuples.of(t._1(), DbUtils.modelToAttributeValue(fieldMap.get(t._1())._1(), t._2()).call(AttributeValue.builder()).build()))
                 .collect(Collectors.toMap(Tuple::_1, Tuple::_2));
-
-        return ret;
     }
 
     @SuppressWarnings("unchecked")

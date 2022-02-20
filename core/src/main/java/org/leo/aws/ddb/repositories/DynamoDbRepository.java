@@ -479,7 +479,7 @@ public interface DynamoDbRepository<ENTITY_TYPE> {
     default Flux<ENTITY_TYPE> putItem(@NonNull final List<ENTITY_TYPE> items) {
         return BaseRepositoryUtils.getInstance().batchWriteRequest(dataMapper -> items.stream().map(item -> WriteRequest.builder()
                 .putRequest(PutRequest.builder()
-                        .item(dataMapper.mapToValue(item))
+                        .item(dataMapper.mapFromEntityToAttributeValue(item))
                         .build())
                 .build()), () -> items, DataMapperUtils.getDataMapper(getParameterType()));
     }
