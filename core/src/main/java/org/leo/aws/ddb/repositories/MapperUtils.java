@@ -10,6 +10,7 @@ import org.leo.aws.ddb.utils.exceptions.UtilsException;
 import org.springframework.core.env.Environment;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ReflectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -162,7 +163,7 @@ public enum MapperUtils {
 
         if (!isTransient(annotations)) {
             if (isAnnotatedCorrectly(annotations)) {
-                final DbAttribute DbAttribute = !CollectionUtils.isEmpty(annotations) ?
+                final DbAttribute dbAttribute = !CollectionUtils.isEmpty(annotations) ?
                         (DbAttribute) annotations.stream().filter(a -> (a instanceof DbAttribute)).findAny().orElse(null) : null;
                 final DateCreated dateCreated = !CollectionUtils.isEmpty(annotations) ?
                         (DateCreated) annotations.stream().filter(a -> (a instanceof DateCreated)).findAny().orElse(null) : null;
@@ -178,7 +179,7 @@ public enum MapperUtils {
                         (SecondaryIndices) annotations.stream().filter(a -> (a instanceof SecondaryIndices)).findAny().orElse(null) : null;
                 final VersionAttribute versionAttribute = !CollectionUtils.isEmpty(annotations) ?
                         (VersionAttribute) annotations.stream().filter(a -> (a instanceof VersionAttribute)).findAny().orElse(null) : null;
-                final String fieldName = DbAttribute != null ? DbAttribute.value() : field.getName();
+                final String fieldName = (dbAttribute != null && !StringUtils.isEmpty(dbAttribute.value())) ? dbAttribute.value() : field.getName();
                 final List<SecondaryIndex> gsiList;
                 final String fieldNameVal;
                 final Class<?> fieldClass = field.getType();
@@ -217,12 +218,12 @@ public enum MapperUtils {
                         }
                     }
                 });
-                fieldNameVal = getFieldName(DbAttribute, dateCreated, dateUpdated, field, builder);
+                fieldNameVal = getFieldName(dbAttribute, dateCreated, dateUpdated, field, builder);
 
-                mappedFields.put(fieldNameVal, Tuples.of(field, DbAttribute));
+                mappedFields.put(fieldNameVal, Tuples.of(field, dbAttribute));
 
                 if (versionAttribute != null) {
-                    versionAttMap.put(fieldNameVal, Tuples.of(field, DbAttribute));
+                    versionAttMap.put(fieldNameVal, Tuples.of(field, dbAttribute));
                 }
 
             } else {
