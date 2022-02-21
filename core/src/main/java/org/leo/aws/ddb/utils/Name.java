@@ -1,17 +1,19 @@
 package org.leo.aws.ddb.utils;
 
 public interface Name {
-    Comparator gt();
+    SingleValueComparator gt();
 
-    Comparator lt();
+    SingleValueComparator lt() ;
 
-    Comparator gte();
+    SingleValueComparator gte();
 
-    Comparator lte();
+    SingleValueComparator lte();
 
-    Comparator eq();
+    SingleValueComparator eq();
 
-    Comparator ne();
+    SingleValueComparator ne();
 
-    Comparator notExists();
+    SingleValueComparator notExists();
+
+    DoubleValueComparator between();
 }

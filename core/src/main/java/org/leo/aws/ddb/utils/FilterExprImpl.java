@@ -92,85 +92,114 @@ class FilterExprImpl implements FilterExpr {
         }
 
         @Override
-        public Comparator gt() {
-            this.comparator = new GreaterThan(filterExpression);
-
-            return this.comparator;
+        public SingleValueComparator gt() {
+            return (SingleValueComparator) (this.comparator = new GreaterThan(filterExpression));
         }
 
         @Override
-        public Comparator lt() {
-            return (this.comparator = new LessThan(filterExpression));
+        public SingleValueComparator lt() {
+            return (SingleValueComparator) (this.comparator = new LessThan(filterExpression));
         }
 
         @Override
-        public Comparator gte() {
-            return (this.comparator = new GreaterThanOrEquals(filterExpression));
+        public SingleValueComparator gte() {
+            return (SingleValueComparator) (this.comparator = new GreaterThanOrEquals(filterExpression));
         }
 
         @Override
-        public Comparator lte() {
-            return (this.comparator = new LessThanOrEquals(filterExpression));
+        public SingleValueComparator lte() {
+            return (SingleValueComparator) (this.comparator = new LessThanOrEquals(filterExpression));
         }
 
         @Override
-        public Comparator eq() {
-            return (this.comparator = new Equals(filterExpression));
+        public SingleValueComparator eq() {
+            return (SingleValueComparator) (this.comparator = new Equals(filterExpression));
         }
 
         @Override
-        public Comparator ne() {
-            return (this.comparator = new NotEquals(filterExpression));
+        public SingleValueComparator ne() {
+            return (SingleValueComparator) (this.comparator = new NotEquals(filterExpression));
         }
 
 
         @Override
-        public Comparator notExists() {
-            return (this.comparator = new NotExists(filterExpression));
+        public SingleValueComparator notExists() {
+            return (SingleValueComparator) (this.comparator = new NotExists(filterExpression));
+        }
+
+        public DoubleValueComparator between() {
+            return (DoubleValueComparator) (this.comparator = new Between(filterExpression));
         }
 
         String expression() {
-            if (!(comparator instanceof NotExists)) {
-                final ValueImpl value = comparator.value;
+            if (!(comparator instanceof NotExists) && !(comparator instanceof Between)) {
+                final SingleValueImpl value = (SingleValueImpl) comparator.value;
                 final Operator operator;
 
                 if (value == null) {
                     throw new UtilsException("Invalid Expression");
                 }
 
-                operator = value.operator;
+                operator = value.operator();
 
                 return MessageFormat.format("#{0}{1}:{2}{3}", alias, comparator.expression(), value.name, operator == null ? "" : operator.expression());
+            } else if(comparator instanceof Between){
+                final DoubleValueImpl value = (DoubleValueImpl) comparator.value;
+                final Operator operator;
+
+
+                if(value.value1 == null || value.value2 == null) {
+                    throw new UtilsException("Invalid Expression");
+                }
+
+                operator = value.operator();
+
+                return MessageFormat.format("#{0}{1}:{2} and :{3} {4}", alias, comparator.expression(), value.value1.name, value.value2.name,
+                        operator == null ? "" : operator.expression() + " ");
             } else {
                 return MessageFormat.format(comparator.expression(), name);
             }
         }
 
         Map<String, String> attributeNameMap() {
+            final ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+
             if (!(comparator instanceof NotExists)) {
-                final ValueImpl value = comparator.value;
-                final ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-                final AbstractOperator operator = value.operator;
+                final AbstractValueImpl value = (AbstractValueImpl) comparator.value;
+                final AbstractOperator operator = value.operator();
 
                 builder.put("#" + alias, name);
 
-                if (operator != null) {
+                if(operator != null) {
                     builder.putAll(operator.attributeNameMap());
                 }
 
                 return builder.build();
-            } else {
-                return ImmutableMap.of();
             }
+
+            return builder.build();
         }
 
         Map<String, AttributeValue> attributeValueMap() {
-            if (!(comparator instanceof NotExists)) {
+            if (!(comparator instanceof NotExists) && !(comparator instanceof Between)) {
                 final ImmutableMap.Builder<String, AttributeValue> builder = ImmutableMap.builder();
-                final ValueImpl value = comparator.value;
-                final AbstractOperator operator = value.operator;
+                final SingleValueImpl value = (SingleValueImpl) comparator.value;
+                final AbstractOperator operator = value.operator();
 
                 builder.put(":" + value.name, value.value);
+
+                if (operator != null) {
+                    builder.putAll(operator.attributeValueMap());
+                }
+
+                return builder.build();
+            } else if(comparator instanceof Between){
+                final ImmutableMap.Builder<String, AttributeValue> builder = ImmutableMap.builder();
+                final DoubleValueImpl value = (DoubleValueImpl) comparator.value;
+                final AbstractOperator operator = value.operator();
+
+                builder.put(":" + value.value1.name, value.value1.value);
+                builder.put(":" + value.value2.name, value.value2.value);
 
                 if (operator != null) {
                     builder.putAll(operator.attributeValueMap());
@@ -193,15 +222,48 @@ class FilterExprImpl implements FilterExpr {
     }
 
     private static abstract class AbstractComparator implements Comparator {
-        private ValueImpl value;
-        private final FilterExprImpl filterExpression;
+        protected Value value;
+        protected final FilterExprImpl filterExpression;
 
-        protected AbstractComparator(final FilterExprImpl filterExpression) {
+        public AbstractComparator(final FilterExprImpl filterExpression) {
             this.filterExpression = filterExpression;
         }
 
+        @Override
+        public String toString() {
+            return "AbstractComparator1{" +
+                    "value=" + value +
+                    ", filterExpression=" + filterExpression +
+                    '}';
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static abstract class SingleValueAbstractComparator extends AbstractComparator implements SingleValueComparator {
+
+        protected SingleValueAbstractComparator(final FilterExprImpl filterExpression) {
+            super(filterExpression);
+        }
+
         public Value value(final String name, final AttributeValue value) {
-            return (this.value = new ValueImpl(name, value, filterExpression));
+            return this.value = new SingleValueImpl(name, value, filterExpression);
+        }
+
+        @Override
+        public String toString() {
+            return "AbstractComparator{} " + super.toString();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static abstract class DoubleValueAbstractComparator extends AbstractComparator implements DoubleValueComparator {
+        public DoubleValueAbstractComparator(FilterExprImpl filterExpression) {
+            super(filterExpression);
+        }
+
+        @Override
+        public Value value(final String name1, final AttributeValue value1, final String name2, final AttributeValue value2) {
+            return (this.value = new DoubleValueImpl(new SingleValueImpl(name1, value1, filterExpression), new SingleValueImpl(name2, value2, filterExpression), filterExpression));
         }
 
         @Override
@@ -212,7 +274,7 @@ class FilterExprImpl implements FilterExpr {
         }
     }
 
-    private static class LessThan extends AbstractComparator {
+    private static class LessThan extends SingleValueAbstractComparator {
 
         public LessThan(final FilterExprImpl filterExpression) {
             super(filterExpression);
@@ -229,7 +291,24 @@ class FilterExprImpl implements FilterExpr {
         }
     }
 
-    private static final class GreaterThan extends AbstractComparator {
+    public static final class Between extends DoubleValueAbstractComparator {
+        public Between(final FilterExprImpl filterExpression) {
+            super(filterExpression);
+        }
+
+
+        @Override
+        public String expression() {
+            return " between ";
+        }
+
+        @Override
+        public String toString() {
+            return "Between{} " + super.toString();
+        }
+    }
+
+    private static final class GreaterThan extends SingleValueAbstractComparator {
 
         private GreaterThan(final FilterExprImpl filterExpression) {
             super(filterExpression);
@@ -246,7 +325,7 @@ class FilterExprImpl implements FilterExpr {
         }
     }
 
-    private static final class LessThanOrEquals extends AbstractComparator {
+    private static final class LessThanOrEquals extends SingleValueAbstractComparator {
         private LessThanOrEquals(final FilterExprImpl filterExpression) {
             super(filterExpression);
         }
@@ -262,7 +341,7 @@ class FilterExprImpl implements FilterExpr {
         }
     }
 
-    private static final class GreaterThanOrEquals extends AbstractComparator {
+    private static final class GreaterThanOrEquals extends SingleValueAbstractComparator {
         private GreaterThanOrEquals(final FilterExprImpl filterExpression) {
             super(filterExpression);
         }
@@ -278,7 +357,7 @@ class FilterExprImpl implements FilterExpr {
         }
     }
 
-    private static final class Equals extends AbstractComparator {
+    private static final class Equals extends SingleValueAbstractComparator {
 
         private Equals(final FilterExprImpl filterExpression) {
             super(filterExpression);
@@ -295,7 +374,7 @@ class FilterExprImpl implements FilterExpr {
         }
     }
 
-    private static final class NotEquals extends AbstractComparator {
+    private static final class NotEquals extends SingleValueAbstractComparator {
 
         private NotEquals(final FilterExprImpl filterExpression) {
             super(filterExpression);
@@ -312,7 +391,7 @@ class FilterExprImpl implements FilterExpr {
         }
     }
 
-    private static final class NotExists extends AbstractComparator {
+    private static final class NotExists extends SingleValueAbstractComparator {
         public NotExists(final FilterExprImpl filterExpression) {
             super(filterExpression);
         }
@@ -327,16 +406,11 @@ class FilterExprImpl implements FilterExpr {
         }
     }
 
-    public static final class ValueImpl implements Value {
-        private final AttributeValue value;
+    private static abstract class AbstractValueImpl implements Value {
         private AbstractOperator operator;
         private final FilterExprImpl filterExpression;
-        private final String name;
 
-
-        private ValueImpl(final String name, final AttributeValue value, final FilterExprImpl filterExpression) {
-            this.name = name;
-            this.value = value;
+        private AbstractValueImpl(final FilterExprImpl filterExpression) {
             this.filterExpression = filterExpression;
         }
 
@@ -379,12 +453,56 @@ class FilterExprImpl implements FilterExpr {
             return new ExprImpl(filterExpression);
         }
 
+        public AbstractOperator operator() {
+            return operator;
+        }
+
         @Override
         public String toString() {
-            return "Value{" +
-                    "value=" + value +
-                    ", comparator=" + operator +
+            return "AbstractValueImpl{" +
+                    "operator=" + operator +
+                    ", filterExpression=" + filterExpression +
                     '}';
+        }
+    }
+
+    private static final class DoubleValueImpl extends AbstractValueImpl {
+        private final SingleValueImpl value1;
+        private final SingleValueImpl value2;
+
+        public DoubleValueImpl(SingleValueImpl value1, SingleValueImpl value2, FilterExprImpl filterExpression) {
+            super(filterExpression);
+            this.value1 = value1;
+            this.value2 = value2;
+        }
+
+        @Override
+        public String toString() {
+            return "DoubleValueImpl{" +
+                    "value1=" + value1 +
+                    ", value2=" + value2 +
+                    "} " + super.toString();
+        }
+    }
+
+    private static final class SingleValueImpl extends AbstractValueImpl {
+        private final AttributeValue value;
+        private final String name;
+
+
+        private SingleValueImpl(final String name, final AttributeValue value, final FilterExprImpl filterExpression) {
+            super(filterExpression);
+            this.name = name;
+            this.value = value;
+        }
+
+
+        @Override
+        public String toString() {
+            return "ValueImpl{" +
+                    "value=" + value +
+                    ", name='" + name + '\'' +
+                    "} " + super.toString();
         }
     }
 
