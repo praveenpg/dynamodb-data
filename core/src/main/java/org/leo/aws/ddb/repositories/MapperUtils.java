@@ -145,7 +145,7 @@ public enum MapperUtils {
     private <T> void setFieldMappings(final Map<String, Tuple<Field, DbAttribute>> mappedFields,
                                       final Map<KeyType, Tuple<String, Field>> primaryKeyMapping,
                                       final Field field,
-                                      final ConcurrentHashMap<String, GSI.Builder> IndexMap,
+                                      final ConcurrentHashMap<String, GSI.Builder> indexMap,
                                       final Map<String, Tuple<Field, DbAttribute>> versionAttMap,
                                       final AttributeMapper.Builder<T> builder) {
         final List<Annotation> annotations;
@@ -202,7 +202,7 @@ public enum MapperUtils {
 
                 gsiList.forEach(gsi -> {
                     if (gsi != null) {
-                        final GSI.Builder gsiBuilder = IndexMap.computeIfAbsent(gsi.name(), s -> GSI.builder(gsi.name())
+                        final GSI.Builder gsiBuilder = indexMap.computeIfAbsent(gsi.name(), s -> GSI.builder(gsi.name())
                                 .projectionType(gsi.projectionType()));
                         final Tuple<String, Field> keyTuple = Tuples.of(fieldName, field);
 
@@ -232,11 +232,11 @@ public enum MapperUtils {
         }
     }
 
-    private <T> String getFieldName(final DbAttribute DbAttribute, final DateCreated dateCreated, final DateUpdated dateUpdated, final Field field, final AttributeMapper.Builder<T> builder) {
+    private <T> String getFieldName(final DbAttribute dbAttribute, final DateCreated dateCreated, final DateUpdated dateUpdated, final Field field, final AttributeMapper.Builder<T> builder) {
         final String fieldName;
 
-        if (DbAttribute != null) {
-            fieldName = DbAttribute.value();
+        if (dbAttribute != null && !StringUtils.isEmpty(dbAttribute.value())) {
+            fieldName = dbAttribute.value();
         } else if (dateCreated != null) {
             fieldName = dateCreated.value();
             builder.dateCreatedField(Tuples.of(dateCreated.value(), field));
