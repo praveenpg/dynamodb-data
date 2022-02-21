@@ -5,6 +5,7 @@ package org.leo.aws.ddb.repositories;
 import org.leo.aws.ddb.annotations.DbAttribute;
 import org.leo.aws.ddb.annotations.KeyType;
 import org.leo.aws.ddb.utils.Tuple;
+import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -36,7 +37,7 @@ final class AttributeMapper<T> {
         this.mappedFields = mappedFields;
         this.constructor = constructor;
         this.primaryKeyMapping = primaryKeyMapping;
-        this.tableName = tableName;
+        this.tableName = !StringUtils.isEmpty(tableName) ? tableName : mappedClass.getSimpleName();
         this.dateUpdatedField = dateUpdatedField;
         this.dateCreatedField = dateCreatedField;
         this.globalSecondaryIndexMap = globalSecondaryIndexMap;
