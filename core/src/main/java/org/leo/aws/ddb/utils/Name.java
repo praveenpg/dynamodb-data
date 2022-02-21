@@ -11,5 +11,7 @@ public interface Name {
 
     Comparator eq();
 
+    Comparator ne();
+
     Comparator notExists();
 }
