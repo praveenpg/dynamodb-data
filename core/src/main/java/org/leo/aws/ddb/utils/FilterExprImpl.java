@@ -119,6 +119,12 @@ class FilterExprImpl implements FilterExpr {
         }
 
         @Override
+        public Comparator ne() {
+            return (this.comparator = new NotEquals(filterExpression));
+        }
+
+
+        @Override
         public Comparator notExists() {
             return (this.comparator = new NotExists(filterExpression));
         }
@@ -286,6 +292,23 @@ class FilterExprImpl implements FilterExpr {
         @Override
         public String toString() {
             return "Equals{} " + super.toString();
+        }
+    }
+
+    private static final class NotEquals extends AbstractComparator {
+
+        private NotEquals(final FilterExprImpl filterExpression) {
+            super(filterExpression);
+        }
+
+        @Override
+        public String expression() {
+            return " <> ";
+        }
+
+        @Override
+        public String toString() {
+            return "NotEquals{} " + super.toString();
         }
     }
 
