@@ -291,7 +291,7 @@ class FilterExprImpl implements FilterExpr {
         }
     }
 
-    public static final class Between extends DoubleValueAbstractComparator {
+    private static final class Between extends DoubleValueAbstractComparator {
         public Between(final FilterExprImpl filterExpression) {
             super(filterExpression);
         }
