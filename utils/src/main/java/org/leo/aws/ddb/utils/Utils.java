@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import org.leo.aws.ddb.utils.exceptions.Issue;
 import org.leo.aws.ddb.utils.exceptions.UtilsException;
-import rx.functions.Action0;
-import rx.functions.Func1;
 
 import java.io.IOException;
 import java.lang.reflect.Array;

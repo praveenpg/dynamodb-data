@@ -1,8 +1,6 @@
 package org.leo.aws.ddb.utils;
 
 import org.springframework.core.env.Environment;
-import rx.functions.Action2;
-import rx.functions.Func1;
 
 import java.util.HashMap;
 import java.util.regex.Matcher;
