@@ -478,53 +478,6 @@ enum BaseRepositoryUtils {
     }
 
 
-    @SuppressWarnings({"DuplicatedCode", "OptionalUsedAsFieldOrParameterType"})
-    @Deprecated
-    <ENTITY_TYPE> Tuple<ProjectionType, QueryPublisher> getDataFromIndex(final String indexName,
-                                                                         final String hashKeyValue,
-                                                                         final Optional<?> rangeKeyValue,
-                                                                         final Class<ENTITY_TYPE> dataClass,
-                                                                         final Expr filterExpressions) {
-
-        final AttributeMapper<ENTITY_TYPE> attributeMapper = (AttributeMapper<ENTITY_TYPE>) MapperUtils.getInstance().getAttributeMappingMap()
-                .get(dataClass.getName());
-        final GSI secondaryIndex = attributeMapper.getGlobalSecondaryIndexMap().get(indexName);
-
-        if (secondaryIndex == null) {
-            throw new DbException(MessageFormat.format("Index [{0}] not defined in the data model", indexName));
-        } else if (rangeKeyValue.isPresent() && secondaryIndex.getRangeKeyTuple() == null) {
-            throw new DbException(MessageFormat.format("Sort Key not defined for index[{0}] in the data model", indexName));
-        } else {
-            final String keyConditionExpression = "#d = :partition_key" + (rangeKeyValue.isPresent() ? (" and " + secondaryIndex.getRangeKeyTuple()._1()
-                    + " = :sort_key_val") : "");
-            final QueryRequest request;
-            final QueryPublisher queryPublisher;
-            final QueryRequest.Builder builder = QueryRequest.builder();
-            final Map<String, String> nameMap = new HashMap<>(software.amazon.awssdk.utils.ImmutableMap.<String, String>builder().put("#d",
-                    secondaryIndex.getHashKeyTuple()._1()).build());
-            final Map<String, AttributeValue> attributeValueMap = new HashMap<>();
-
-            rangeKeyValue.ifPresent(s -> attributeValueMap.put(":sort_key_val", AttributeValue.builder().s(String.valueOf(s)).build()));
-
-            attributeValueMap.put(":partition_key", AttributeValue.builder().s(hashKeyValue).build());
-
-            builder.tableName(attributeMapper.getTableName());
-            builder.indexName(secondaryIndex.getName());
-
-            setFilterExpression(filterExpressions, builder, nameMap, attributeValueMap);
-
-            builder.keyConditionExpression(keyConditionExpression);
-            builder.expressionAttributeNames(nameMap);
-            builder.expressionAttributeValues(attributeValueMap);
-
-            request = builder.build();
-
-            queryPublisher = DataMapperUtils.getDynamoDbAsyncClient().queryPaginator(request);
-
-            return Tuples.of(secondaryIndex.getProjectionType(), queryPublisher);
-        }
-    }
-
     @SuppressWarnings("DuplicatedCode")
     <ENTITY_TYPE> Tuple<ProjectionType, QueryPublisher> getDataFromIndex(final String indexName,
                                                                          final String hashKeyValue,
@@ -546,8 +499,7 @@ enum BaseRepositoryUtils {
             final QueryRequest request;
             final QueryPublisher queryPublisher;
             final QueryRequest.Builder builder = QueryRequest.builder();
-            final Map<String, String> nameMap = new HashMap<>(software.amazon.awssdk.utils.ImmutableMap.<String, String>builder().put("#d",
-                    secondaryIndex.getHashKeyTuple()._1()).build());
+            final Map<String, String> nameMap = new HashMap<>(Map.of("#d", secondaryIndex.getHashKeyTuple()._1()));
             final Map<String, AttributeValue> attributeValueMap = new HashMap<>();
 
             if (rangeKeyValue != null) {

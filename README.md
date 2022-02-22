@@ -109,3 +109,46 @@ class UserService {
     }
 }
 ```
+- Using Filter Expressions
+The library also supports using filter expression. Example below:
+```java
+@Data //Lombok
+@DDBTable(name = "${sub.category.table.name}")
+public class SubCategory extends VersionedEntity {
+  @HashKey
+  @DbAttribute("subCategoryId")
+  @SecondaryIndex(name = "categoryId-subCategoryId-index", type = KeyType.RANGE_KEY, projectionType = ProjectionType.ALL)
+  private String id;
+
+  @SecondaryIndex(name = "categoryId-subCategoryId-index", type = KeyType.HASH_KEY, projectionType = ProjectionType.ALL)
+  private String categoryId;
+
+  @DbAttribute(nullable = false)
+  private String name;
+
+  @DbAttribute(nullable = false)
+  private String description;
+}
+```
+If we would like to query the above to fetch sub categories which does match a particular criteriaId and whose versions fall between 0 and 4, we can do something like shown below:
+```java
+    public Flux<SubCategory> findSubCategoriesByCategoryId(final String categoryId, final String name) {
+        return subCategoryRepository.findBySecondaryIndex("categoryId-subCategoryId-index", categoryId,
+                Expr.builder()
+                        .name("name", "xyz")
+                        .ne()
+                        .value("name", AttributeValue.builder().s(name).build())
+                        .and()
+                        .name("version", "ver")
+                        .between()
+                        .value("lv", AttributeValue.builder().n("-1").build(), "hv", AttributeValue.builder().n("4").build())
+                        .buildFilterExpression());
+    }
+```
+The above would be the equivalent of 
+```java
+aws dynamodb query \
+    --table-name sub-category \
+    --key-condition-expression "ForumName = :name and Subject = :sub" \
+    --expression-attribute-values  file://values.json
+```
