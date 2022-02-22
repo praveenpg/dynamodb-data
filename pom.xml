@@ -14,6 +14,14 @@
         Provides an easy way to access AWS DynamoDB using aws sdk version 2.
     </description>
 
+    <properties>
+        <spring.boot.version>2.6.3</spring.boot.version>
+        <spring.version>5.3.15</spring.version>
+        <guava.version>31.0.1-jre</guava.version>
+        <jackson.version>2.13.1</jackson.version>
+        <aws.sdk.version>2.17.132</aws.sdk.version>
+    </properties>
+
     <modules>
         <module>utils</module>
         <module>core</module>
@@ -51,42 +59,42 @@
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-framework-bom</artifactId>
-                <version>5.2.9.RELEASE</version>
+                <version>${spring.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
-                <version>2.5.6</version>
+                <version>${spring.boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>software.amazon.awssdk</groupId>
                 <artifactId>bom</artifactId>
-                <version>2.17.132</version>
+                <version>${aws.sdk.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava-bom</artifactId>
-                <version>29.0-jre</version>
+                <version>${guava.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
-                <version>2.11.0</version>
+                <version>${jackson.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
             <dependency>
                 <groupId>io.projectreactor</groupId>
                 <artifactId>reactor-bom</artifactId>
-                <version>Dysprosium-SR9</version>
+                <version>2020.0.16</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
