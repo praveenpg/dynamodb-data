@@ -19,7 +19,7 @@ An Object model (almost) for dynamoDb
         <dependency>
             <groupId>net.leodb.dynamodb</groupId>
             <artifactId>starter</artifactId>
-            <version>1.0.1</version>
+            <version>1.0.17</version>
         </dependency>
 ```
 Add the following to dependencyManagement
