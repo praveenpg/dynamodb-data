@@ -17,3 +17,4 @@ dynamodb-data.iml
 /annotations/*.versionsBackup
 /annotations/target
 /target
+/utils/*.versionsBackup
