@@ -179,7 +179,7 @@ public enum MapperUtils {
                         (SecondaryIndices) annotations.stream().filter(a -> (a instanceof SecondaryIndices)).findAny().orElse(null) : null;
                 final VersionAttribute versionAttribute = !CollectionUtils.isEmpty(annotations) ?
                         (VersionAttribute) annotations.stream().filter(a -> (a instanceof VersionAttribute)).findAny().orElse(null) : null;
-                final String fieldName = (dbAttribute != null && !StringUtils.isEmpty(dbAttribute.value())) ? dbAttribute.value() : field.getName();
+                final String fieldName = (dbAttribute != null && StringUtils.hasText(dbAttribute.value())) ? dbAttribute.value() : field.getName();
                 final List<SecondaryIndex> gsiList;
                 final String fieldNameVal;
                 final Class<?> fieldClass = field.getType();
@@ -235,7 +235,7 @@ public enum MapperUtils {
     private <T> String getFieldName(final DbAttribute dbAttribute, final DateCreated dateCreated, final DateUpdated dateUpdated, final Field field, final AttributeMapper.Builder<T> builder) {
         final String fieldName;
 
-        if (dbAttribute != null && !StringUtils.isEmpty(dbAttribute.value())) {
+        if (dbAttribute != null && StringUtils.hasText(dbAttribute.value())) {
             fieldName = dbAttribute.value();
         } else if (dateCreated != null) {
             fieldName = dateCreated.value();

@@ -86,7 +86,7 @@ interface DataMapper<T> {
         key.put(primaryKey.getHashKeyName(), getAttributeBuilderFunctionForKeys(primaryKey.getHashKeyValue())
                 .apply(AttributeValue.builder()).build());
 
-        if(!StringUtils.isEmpty(primaryKey.getRangeKeyName())) {
+        if(StringUtils.hasText(primaryKey.getRangeKeyName())) {
             key.put(primaryKey.getRangeKeyName(), getAttributeBuilderFunctionForKeys(primaryKey.getRangeKeyValue())
                     .apply(AttributeValue.builder()).build());
         }

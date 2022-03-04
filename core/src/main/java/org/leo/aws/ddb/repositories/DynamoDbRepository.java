@@ -404,7 +404,7 @@ public interface DynamoDbRepository<ENTITY_TYPE> {
         final Tuple<String, Field> rangeKey = DataMapperUtils.getDataMapper(getParameterType()).getPKMapping().get(KeyType.RANGE_KEY);
         final String rangeKeyName = rangeKey == null ? null : rangeKey._1();
 
-        if (!StringUtils.isEmpty(rangeKeyName)) {
+        if (StringUtils.hasText(rangeKeyName)) {
             throw new DbException("This method cannot be used for entities that has a range key");
         }
 
@@ -415,7 +415,7 @@ public interface DynamoDbRepository<ENTITY_TYPE> {
         final String hashKeyName = getHashKeyName();
         final String rangeKeyName = getRangeKeyName();
 
-        if (StringUtils.isEmpty(rangeKeyName)) {
+        if (!StringUtils.hasText(rangeKeyName)) {
             throw new DbException("This method cannot be used for entities that does not have a range key");
         }
 
