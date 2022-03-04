@@ -299,10 +299,10 @@ enum BaseRepositoryUtils {
                 ReflectionUtils.setField(versionedAttribute._1(), item, BigInteger.ZERO.intValue());
             }
 
-            if (!StringUtils.isEmpty(rangeKeyName)) {
+            if (StringUtils.hasText(rangeKeyName)) {
                 builder.expected(ImmutableMap.of(
                         primaryKey.getHashKeyName(), ExpectedAttributeValue.builder().exists(false).build(),
-                        primaryKey.getRangeKeyName(), ExpectedAttributeValue.builder().exists(false).build()));
+                        rangeKeyName, ExpectedAttributeValue.builder().exists(false).build()));
             } else {
                 builder.expected(ImmutableMap.of(
                         primaryKey.getHashKeyName(), ExpectedAttributeValue.builder().exists(false).build()));
@@ -576,7 +576,7 @@ enum BaseRepositoryUtils {
             final DataMapper<ENTITY_TYPE> dataMapper = DataMapperUtils.getDataMapper(dataClass);
 
 
-            if (!StringUtils.isEmpty(rangeKey) && !StringUtils.isEmpty(rangeKeyValue)) {
+            if (StringUtils.hasText(rangeKey) && StringUtils.hasText(rangeKeyValue)) {
                 keyConditionExpression = MessageFormat.format("{0} = :{1} and begins_with({2}, :sortKeyVal)", hashAlias, hashKey, rangeKey);
             } else {
                 keyConditionExpression = hashAlias + " = :" + hashKey;
@@ -590,11 +590,11 @@ enum BaseRepositoryUtils {
                 attributeValueMap.put(MessageFormat.format(":{0}", hashKey), AttributeValue.builder().n(Utils.getUnformattedNumber((Number) hashKeyValueObj)).build());
             }
 
-            if (!StringUtils.isEmpty(rangeKey) && !StringUtils.isEmpty(rangeKeyValue)) {
+            if (StringUtils.hasText(rangeKey) && StringUtils.hasText(rangeKeyValue)) {
                 attributeValueMap.put(":sortKeyVal", AttributeValue.builder().s(rangeKeyValue).build());
             }
 
-            if (!StringUtils.isEmpty(indexName)) {
+            if (StringUtils.hasText(indexName)) {
                 builder.indexName(indexName);
             }
 
@@ -606,7 +606,7 @@ enum BaseRepositoryUtils {
                 if (page.getLastEndKey() != null) {
                     final String lastEndKeyVal = (String) page.getLastEndKey().getRangeKeyValue();
 
-                    if (StringUtils.isEmpty(rangeKeyValue) || lastEndKeyVal.startsWith(rangeKeyValue)) {
+                    if (!StringUtils.hasText(rangeKeyValue) || lastEndKeyVal.startsWith(rangeKeyValue)) {
                         builder.exclusiveStartKey(dataMapper.getPrimaryKey(page.getLastEndKey()));
                     } else {
                         return Flux.error(new DbException("INVALID_RANGE_KEY_VALUE"));
