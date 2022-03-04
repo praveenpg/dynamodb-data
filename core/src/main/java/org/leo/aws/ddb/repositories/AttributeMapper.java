@@ -37,7 +37,7 @@ final class AttributeMapper<T> {
         this.mappedFields = mappedFields;
         this.constructor = constructor;
         this.primaryKeyMapping = primaryKeyMapping;
-        this.tableName = !StringUtils.isEmpty(tableName) ? tableName : mappedClass.getSimpleName();
+        this.tableName = StringUtils.hasText(tableName) ? tableName : mappedClass.getSimpleName();
         this.dateUpdatedField = dateUpdatedField;
         this.dateCreatedField = dateCreatedField;
         this.globalSecondaryIndexMap = globalSecondaryIndexMap;
